@@ -1,3 +1,4 @@
+from operator import truediv
 from utils import kyber, pem, dilithium, rsaalg
 import argparse
 import requests
@@ -25,6 +26,7 @@ def main():
 
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
+        isPq = True
         #1. Generate Kem keypair and write the SK into file
         sk, pk = kyber.keygen(args.level)
         f = open("keys/kyber", "w")
@@ -35,7 +37,6 @@ def main():
         ssk_pem = open('keys/dilithium', "r").read()
         ssk = pem.sk_pem_to_bytes(ssk_pem)
         signature = dilithium.sign(args.level, pk, ssk)
-        print(signature)
 
         """
         This Code Used to check if the key after conversion still have the same value
@@ -44,11 +45,12 @@ def main():
         f.close()
         """
     else: 
+        isPq = False
         #1. Generate Kem  keypair
         sk, pk = rsaalg.keygen(args.level)
         #Write the secret Kem Keys into file
         f = open("keys/rsakem", "wb")
-        f.write( pem.serialize(ssk, 0))
+        f.write( pem.serialize(sk, 0))
         f.close()
 
         #Change public key pem to bytes that can be used
@@ -58,9 +60,22 @@ def main():
         ssk_pem =  open('keys/rsasig', "rb").read()
         ssk = pem.pem_to_key(ssk_pem, 0)
         signature = rsaalg.sign(pk, ssk)
-    
 
     #3. Sending Requsest To server 
+    print(signature)
+    api_url = "http://127.0.0.1:8000/"
+    response = requests.post(api_url + "/api/sessionGen", 
+    json={
+        #"ssk" :  ssk.hex(), 
+        "isPq": isPq,
+        "kemPub": pk.hex(),
+        "signature": signature.hex(),
+        "sigLevel": args.level,
+        },
+    headers={"Content-Type": "application/json"},
+    )
+    
+    #print(response.json())
 
 if __name__ == "__main__":
     main()

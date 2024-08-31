@@ -19,7 +19,7 @@ def sign(level, message, secret_key):
     signature = signer.sign(message)
     return signature
 
-def verify(level, message, signature, verification_key):
+def verif(level, message, signature, verification_key):
     alg = "Dilithium2" if level == 1 else "Dilithium3" if level == 2 else "Dilithium5"
 
     verifier = oqs.Signature(alg)

@@ -14,7 +14,7 @@ ssk, pk = dilithium.keygen(1)
 #"""
 
 #Test bytes to pem convertion
-response = requests.post(api_url + "/api/sessionStart", 
+response = requests.post(api_url + "/api/sessionGen", 
     json={
         #"ssk" :  ssk.hex(), 
         "pubkey": pk_bytes.hex(),

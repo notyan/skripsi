@@ -25,7 +25,7 @@ def sign(message, secret_key):
     )
     return signature
 
-def verify(message, signature, public_key):
+def verif(message, signature, public_key):
     try:
         public_key.verify(
             signature,
