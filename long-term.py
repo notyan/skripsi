@@ -27,6 +27,7 @@ def main():
         f.close()
     else: 
         sk, pk = rsaalg.keygen(args.level)
+        print(sk)
         f = open("keys/rsasig", "wb")
         f.write(pem.serialize(sk, 0 ))
         f.close()

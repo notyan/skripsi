@@ -1,6 +1,5 @@
 import base64
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
 ##Should i remove the header?
 def bytes_to_pem(key_bytes, key_type="PUBLIC KEY"):
     """Convert bytes to PEM format."""
@@ -36,7 +35,7 @@ def sk_pem_to_bytes(sk_pem):
     """Convert private key PEM to bytes."""
     return pem_to_bytes(sk_pem)
 
-    
+#This will convert instance into PEM type
 def serialize(key, type):
     #type 0 = private , type 1 = public
     if type == 0:
@@ -52,9 +51,26 @@ def serialize(key, type):
         ))
     else:
         return("ERROR KEY OUTSIDE SCOPE")
-    
+
+#This will convert instance into Bytes type
+def serializeDer(key, type):
+    if type == 0:
+        return(key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        ))
+    elif type == 1:
+        return(key.public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ))
+    else:
+        return("ERROR KEY OUTSIDE SCOPE")
+
+
 def pem_to_key(key, type):
     if type == 0:
-        return (load_pem_private_key(key, None))
+        return (serialization.load_pem_private_key(key, None))
     elif type == 1:
-        return(load_pem_public_key(key, None))
+        return(serialization.load_pem_public_key(key, None))

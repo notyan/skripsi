@@ -1,5 +1,8 @@
 from utils import kyber, pem, dilithium, rsaalg
 import argparse
+import requests
+
+
 '''
 TODO
 1. kem.keygen
@@ -22,10 +25,17 @@ def main():
 
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
-        #1. Generate Kem keypair
+        #1. Generate Kem keypair and write the SK into file
         sk, pk = kyber.keygen(args.level)
+        f = open("keys/kyber", "w")
+        f.write( pem.sk_bytes_to_pem(sk))
+        f.close()
+
+        #2. Load the ssk then Sign the Public Key
         ssk_pem = open('keys/dilithium', "r").read()
         ssk = pem.sk_pem_to_bytes(ssk_pem)
+        signature = dilithium.sign(args.level, pk, ssk)
+        print(signature)
 
         """
         This Code Used to check if the key after conversion still have the same value
@@ -33,19 +43,24 @@ def main():
         f.write( pem.sk_bytes_to_pem(ssk))
         f.close()
         """
-        #signature = dilithium.sign(args.level , pk, ssk)
     else: 
         #1. Generate Kem  keypair
         sk, pk = rsaalg.keygen(args.level)
-        ssk_pem =  open('keys/rsasig', "rb").read()
-        #print(ssk_pem)
-        ssk = pem.pem_to_key(ssk_pem, 0)
-
-        f = open("keys/rsa-check", "wb")
+        #Write the secret Kem Keys into file
+        f = open("keys/rsakem", "wb")
         f.write( pem.serialize(ssk, 0))
         f.close()
+
+        #Change public key pem to bytes that can be used
+        pk = pem.serializeDer(pk, 1)
+
+        #2.  Sign the Public Key
+        ssk_pem =  open('keys/rsasig', "rb").read()
+        ssk = pem.pem_to_key(ssk_pem, 0)
+        signature = rsaalg.sign(pk, ssk)
     
 
+    #3. Sending Requsest To server 
 
 if __name__ == "__main__":
     main()
