@@ -1,5 +1,7 @@
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
+import os
+
 
 
 def keygen(level):
@@ -39,3 +41,31 @@ def verif(message, signature, public_key):
         return True
     except:
         return False
+
+# Key Encapsulation
+def encap(public_key):
+    # Generate a random symmetric key (e.g., 256-bit key)
+    shared_key = os.urandom(32) 
+    # Encrypt the symmetric key using the RSA public key
+    ciphertext = public_key.encrypt(
+        shared_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return ciphertext, shared_key  # Return both ciphertext and the symmetric key for demonstration
+
+# Key Decapsulation
+def decap(private_key, ciphertext):
+    # Decrypt the ciphertext to retrieve the symmetric key
+    shared_key = private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return shared_key

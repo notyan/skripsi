@@ -62,7 +62,7 @@ def main():
         signature = rsaalg.sign(pk, ssk)
 
     #3. Sending Requsest To server 
-    print(signature)
+    #print(len(pk))
     api_url = "http://127.0.0.1:8000/"
     response = requests.post(api_url + "/api/sessionGen", 
     json={
@@ -74,8 +74,12 @@ def main():
         },
     headers={"Content-Type": "application/json"},
     )
+
+    # kemPublic_pem = pem.pk_bytes_to_pem(pk)
+    # kemPublic = pem.pem_to_key(kemPublic_pem, 1)
+    # print(kemPublic)
     
-    #print(response.json())
+    print(response.json())
 
 if __name__ == "__main__":
     main()

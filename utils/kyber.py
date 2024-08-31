@@ -8,7 +8,7 @@ def keygen(level):
     secret_key = party.export_secret_key()
 
     #CHANGE to pem file
-    return public_key, secret_key
+    return secret_key, public_key
 
 def encap(level, public_key):
     alg = "Kyber512" if level == 1 else "Kyber768" if level == 2 else "Kyber1024"
