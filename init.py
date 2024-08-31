@@ -9,6 +9,7 @@ TODO
 1. kem.keygen
 2. sign.kem.pubkey
 3. request to server and sent pk , signature, algorithm used
+4. Process response from server
 '''
 
 #main Function
@@ -78,8 +79,29 @@ def main():
     # kemPublic_pem = pem.pk_bytes_to_pem(pk)
     # kemPublic = pem.pem_to_key(kemPublic_pem, 1)
     # print(kemPublic)
-    
-    print(response.json())
+
+    #4. Process Response from server
+    #print(response.json())
+    #print(response.json().get("signature"))
+    sv_ciphertext = response.json().get("ciphertext")
+    sv_signature = response.json().get("signature")
+    if isPq == True:
+        #Open server public key
+        sv_vk_pem = open('keys/sv_dilithium.pub', "r").read()
+        sv_vk = pem.pk_pem_to_bytes(sv_vk_pem)
+
+        is_valid = dilithium.verif(args.level, bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
+        print(is_valid)
+    else: 
+        sv_vk_pem = open('keys/sv_rsasig.pub', "rb").read()
+        sv_vk = pem.pem_to_key(sv_vk_pem, 1)
+        is_valid = rsaalg.verif(bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
+        print(is_valid)
+
+    if is_valid == True:
+        print("Handshake Verified")
+    else: 
+        print("Handshake invalid")
 
 if __name__ == "__main__":
     main()

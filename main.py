@@ -44,7 +44,7 @@ async def start(keys: Protocol):
             #K Generation and encapsulation
             c, K = kyber.encap(keys.sigLevel, bytes.fromhex(keys.kemPub))
             #Ciphertext Signing Process
-            sv_ssk_pem = open('keys/dilithium', "r").read()             #Open pem from file
+            sv_ssk_pem = open('keys/sv_dilithium', "r").read()          #Open pem from file
             sv_ssk = pem.sk_pem_to_bytes(sv_ssk_pem)                    #Change Pem to bytes
             signature = dilithium.sign(keys.sigLevel, c, sv_ssk)        #Sign
         else:
@@ -54,13 +54,12 @@ async def start(keys: Protocol):
             kemPublic = pem.pem_to_key(kemPublic_pem.encode(), 1)       #Encode pem to bytes -> instance
             c, K = rsaalg.encap(kemPublic)
             #Open the server signature key, and change from pem  to instance
-            sv_ssk_pem =  open('keys/rsasig', "rb").read()      #Open pem
+            sv_ssk_pem =  open('keys/sv_rsasig', "rb").read()      #Open pem
             sv_ssk = pem.pem_to_key(sv_ssk_pem, 0)              #Convert to instance
             #Ciphertext Signing Process
             signature = rsaalg.sign(c, sv_ssk)
-        
     else: 
-        print("Not Valid Reject")
+        print("Verification Invalid")
 
     #Sent The signature alongside the ciphertext
     return{"signature" : signature.hex(), "ciphertext" : c.hex()}
