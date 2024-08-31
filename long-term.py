@@ -15,25 +15,24 @@ def main():
 
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
-        sk, pk = dilithium.keygen(args.level)
+        ssk, vk = dilithium.keygen(args.level)
     
         f = open("keys/dilithium", "w")
         #CONVERT TO PEM, than write to file
-        f.write( pem.sk_bytes_to_pem(sk))
+        f.write( pem.sk_bytes_to_pem(ssk))
         f.close()
         f = open("keys/dilithium.pub", "w")
         #CONVERT TO PEM, than write to file
-        f.write(pem.pk_bytes_to_pem(pk))
+        f.write(pem.pk_bytes_to_pem(vk))
         f.close()
     else: 
-        sk, pk = rsaalg.keygen(args.level)
-        print(sk)
+        ssk, vk = rsaalg.keygen(args.level)
         f = open("keys/rsasig", "wb")
-        f.write(pem.serialize(sk, 0 ))
+        f.write(pem.serialize(ssk, 0 ))
         f.close()
 
         f = open("keys/rsasig.pub", "wb")
-        f.write(pem.serialize(pk, 1))
+        f.write(pem.serialize(vk, 1))
         f.close()
         
 
