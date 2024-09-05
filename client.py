@@ -3,15 +3,7 @@ from utils import kyber, pem, dilithium, rsaalg
 import argparse
 import requests
 
-
-'''
-TODO
-1. kem.keygen
-2. sign.kem.pubkey
-3. request to server and sent pk , signature, algorithm used
-4. Process response from server
-'''
-
+api_url = "http://127.0.0.1:8000/"
 #main Function
 def main():
     # Create the parser
@@ -39,12 +31,6 @@ def main():
         ssk = pem.sk_pem_to_bytes(ssk_pem)
         signature = dilithium.sign(args.level, pk, ssk)
 
-        """
-        This Code Used to check if the key after conversion still have the same value
-        f = open("keys/dilithium-check", "w")
-        f.write( pem.sk_bytes_to_pem(ssk))
-        f.close()
-        """
     else: 
         isPq = False
         #1. Generate Kem  keypair
@@ -63,11 +49,8 @@ def main():
         signature = rsaalg.sign(pk, ssk)
 
     #3. Sending Requsest To server 
-    #print(len(pk))
-    api_url = "http://127.0.0.1:8000/"
     response = requests.post(api_url + "/api/sessionGen", 
     json={
-        #"ssk" :  ssk.hex(), 
         "isPq": isPq,
         "kemPub": pk.hex(),
         "signature": signature.hex(),
@@ -76,20 +59,13 @@ def main():
     headers={"Content-Type": "application/json"},
     )
 
-    # kemPublic_pem = pem.pk_bytes_to_pem(pk)
-    # kemPublic = pem.pem_to_key(kemPublic_pem, 1)
-    # print(kemPublic)
-
     #4. Process Response from server
-    #print(response.json())
-    #print(response.json().get("signature"))
     sv_ciphertext = response.json().get("ciphertext")
     sv_signature = response.json().get("signature")
     if isPq == True:
         #Open server public key
-        sv_vk_pem = open('keys/sv_dilithium.pub', "r").read()
-        sv_vk = pem.pk_pem_to_bytes(sv_vk_pem)
-
+        sv_vk_pem = open('keys/sv_dilithium.pub', "r").read()   #Read the sv_vk PEM from te file
+        sv_vk = pem.pk_pem_to_bytes(sv_vk_pem)                  #Convert into bytes
         is_valid = dilithium.verif(args.level, bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
         print(is_valid)
     else: 

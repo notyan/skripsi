@@ -1,7 +1,7 @@
 from typing import Union
 from utils import kyber, pem, dilithium, rsaalg
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 
 app = FastAPI()
 
@@ -12,18 +12,10 @@ class Protocol(BaseModel):
     signature: str
     sigLevel: int
 
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
-'''
-TODO
-1. Verify kem pk
-2. generate and encapsulate K
-3. Sign ciphertext(c)
-4. Return back ciphertext, and signature
-'''
 @app.post("/api/sessionGen")
 async def start(keys: Protocol):
     #1. Verify PK KEM
@@ -31,11 +23,13 @@ async def start(keys: Protocol):
         #open Client Public Keys
         cl_vk_pem = open('keys/dilithium.pub', "r").read()
         cl_vk = pem.pk_pem_to_bytes(cl_vk_pem)
-        #verify PK using client_vk
+        #Verify PK using client_vk
+        #kempub and signature are sent by hex, so we need to convert it back to bytes
         is_valid = dilithium.verif(keys.sigLevel, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
     else :
         cl_vk_pem = open('keys/rsasig.pub', "rb").read()
         cl_vk = pem.pem_to_key(cl_vk_pem, 1)
+        #kempub and signature are sent by hex, so we need to convert it back to bytes
         is_valid = rsaalg.verif(bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
     #2. Generate and Encapsulate K, then sign
@@ -51,11 +45,11 @@ async def start(keys: Protocol):
             #print(bytes.fromhex(keys.kemPub))
             kemPublic_bytes = bytes.fromhex(keys.kemPub)   
             kemPublic_pem = pem.pk_bytes_to_pem(kemPublic_bytes)        #Change bytes to pem
-            kemPublic = pem.pem_to_key(kemPublic_pem.encode(), 1)       #Encode pem to bytes -> instance
+            kemPublic = pem.pem_to_key(kemPublic_pem.encode(), 1)       #Encode pem -> bytes -> instance
             c, K = rsaalg.encap(kemPublic)
             #Open the server signature key, and change from pem  to instance
-            sv_ssk_pem =  open('keys/sv_rsasig', "rb").read()      #Open pem
-            sv_ssk = pem.pem_to_key(sv_ssk_pem, 0)              #Convert to instance
+            sv_ssk_pem =  open('keys/sv_rsasig', "rb").read()           #Open pem from file
+            sv_ssk = pem.pem_to_key(sv_ssk_pem, 0)                      #Convert to instance
             #Ciphertext Signing Process
             signature = rsaalg.sign(c, sv_ssk)
     else: 
@@ -65,24 +59,12 @@ async def start(keys: Protocol):
     return{"signature" : signature.hex(), "ciphertext" : c.hex()}
 
 
-    #print(keys.signature)
-    #print( bytes.fromhex(keys.signature))
-    #print(type(bytes.fromhex(keys.kemPub)))
-
-    #ciphertext = kyber.encap(keys.kemalg, keys.pubkey) 
-    #signature = dilithium.sign(keys.ssk,ciphertext, keys.sigLevel)
-    #return {verification}
-
-
 @app.get("/api/sig_gen")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
 @app.post("/api/bytesToPem")
 async def  bytesConvert(keys: Protocol):
-    #bytesdata = bytes.fromhex(keys.pubkey)
-    #result = pem.pk_bytes_to_pem(keys.pubkey)
-    #print(bytes.fromhex(keys.pubkey))
     return {keys.pubkey}
 
 
@@ -90,5 +72,4 @@ async def  bytesConvert(keys: Protocol):
 @app.post("/api/sessionStart")
 async def start(keys: Protocol):
     ciphertext = kyber.encap(keys.kemalg, keys.pubkey) 
-    #signature = dilithium.sign(keys.ssk,ciphertext, keys.sigLevel)
     return {"ciphertext": ciphertext}

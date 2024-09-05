@@ -35,6 +35,5 @@ def main():
         f.write(pem.serialize(vk, 1))
         f.close()
         
-
 if __name__ == "__main__":
     main()
