@@ -17,7 +17,7 @@ def encap(level, public_key):
 
     return ciphertext, shared_key
 
-def decaps(level, secret_key, ciphertext):
+def decap(level, secret_key, ciphertext):
     alg = "Kyber512" if level == 1 else "Kyber768" if level == 2 else "Kyber1024"
     party = oqs.KeyEncapsulation(alg, secret_key)
     shared_key = party.decap_secret(ciphertext)

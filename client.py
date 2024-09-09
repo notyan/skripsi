@@ -2,6 +2,7 @@ from operator import truediv
 from utils import kyber, pem, dilithium, rsaalg
 import argparse
 import requests
+import time
 
 api_url = "http://127.0.0.1:8000/"
 #main Function
@@ -12,10 +13,14 @@ def main():
     # Add arguments
     parser.add_argument('level', type=int, help='Security Level from 1-3')
     parser.add_argument('-pq' , action='store_true',  help="Use Post Quantum Cryptograpy")
+    parser.add_argument('-b', '--bench',action='store_true', help="Run Benchmark")
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
 
     # Parse the arguments
     args = parser.parse_args()
+
+
+
 
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
