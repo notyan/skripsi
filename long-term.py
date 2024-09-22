@@ -1,8 +1,7 @@
 import argparse
 import time
 import timeit
-from utils import dilithium, pem, rsaalg
-from cryptography.hazmat.primitives.asymmetric import ec
+from utils import dilithium, pem, rsaalg, ecc  
 
 def main():
     # Create the parser
@@ -26,20 +25,9 @@ def main():
                         rsaalg.keygen(level)
                         running_time.append(time.time_ns() - start_time)
                     elif alg == "ECC":
-                        if level == 1:
-                            start_time = time.time_ns()
-                            ec.generate_private_key(ec.BrainpoolP256R1())
-                            running_time.append(time.time_ns() - start_time)
-                        elif level == 2:
-                            start_time = time.time_ns()
-                            ec.generate_private_key(ec.BrainpoolP384R1())
-                            running_time.append(time.time_ns() - start_time)
-                        elif level == 3:
-                            start_time = time.time_ns()
-                            ec.generate_private_key(ec.BrainpoolP512R1())
-                            running_time.append(time.time_ns() - start_time)
-                        else :
-                            print("Level Outside parameter")
+                        start_time = time.time_ns()
+                        ecc.keygen(level)
+                        running_time.append(time.time_ns() - start_time)
                     else:
                         start_time = time.time_ns()
                         dilithium.keygen(level)
@@ -64,11 +52,11 @@ def main():
             f.close()
         else: 
             ssk, vk = rsaalg.keygen(args.level)
-            f = open("keys/rsasig", "wb")
+            f = open("keys/ecdsa", "wb")
             f.write(pem.serialize(ssk, 0 ))
             f.close()
 
-            f = open("keys/rsasig.pub", "wb")
+            f = open("keys/ecdsa.pub", "wb")
             f.write(pem.serialize(vk, 1))
             f.close()
         
