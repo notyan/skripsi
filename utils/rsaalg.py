@@ -16,7 +16,7 @@ def keygen(level):
 
     return secret_key, public_key
 
-def sign(message, secret_key):
+def sign(level, message, secret_key):
     signature = secret_key.sign(
         message,
         padding.PSS(
@@ -27,7 +27,7 @@ def sign(message, secret_key):
     )
     return signature
 
-def verif(message, signature, public_key):
+def verif(level, message, signature, public_key):
     try:
         public_key.verify(
             signature,
@@ -43,7 +43,7 @@ def verif(message, signature, public_key):
         return False
 
 # Key Encapsulation
-def encap(public_key):
+def encap(level, public_key):
     # Generate a random symmetric key (e.g., 256-bit key)
     shared_key = os.urandom(32) 
     # Encrypt the symmetric key using the RSA public key
@@ -58,7 +58,7 @@ def encap(public_key):
     return ciphertext, shared_key  # Return both ciphertext and the symmetric key for demonstration
 
 # Key Decapsulation
-def decap(private_key, ciphertext):
+def decap(level, private_key, ciphertext):
     # Decrypt the ciphertext to retrieve the symmetric key
     shared_key = private_key.decrypt(
         ciphertext,

@@ -74,3 +74,10 @@ def pem_to_key(key, type):
         return (serialization.load_pem_private_key(key, None))
     elif type == 1:
         return(serialization.load_pem_public_key(key, None))
+    
+    
+def der_to_key(key, type):
+    if type == 0:
+        return (serialization.load_der_private_key(key, None))
+    elif type == 1:
+        return(serialization.load_der_public_key(key, None))

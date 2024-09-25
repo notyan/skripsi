@@ -15,14 +15,14 @@ def keygen(level):
 
     return secret_key, public_key
 
-def sign(message, secret_key):
+def sign(level, message, secret_key):
     signature = secret_key.sign(
         message,
         ec.ECDSA(hashes.SHA256())
     )
     return signature
 
-def verif(message, signature, public_key):
+def verif(level, message, signature, public_key):
     try:
         public_key.verify(
             signature, 
@@ -33,7 +33,7 @@ def verif(message, signature, public_key):
     except:
         return False
 
-def encap(public_key, level):
+def encap(level, public_key):
     # Generate an ephemeral key pair
     if level == 1:
         ephemeral_private_key = ec.generate_private_key(ec.BrainpoolP256R1())
@@ -48,7 +48,7 @@ def encap(public_key, level):
     
     return ephemeral_public_key, shared_key
 
-def decap(private_key, ephemeral_public_bytes):
+def decap(level, private_key, ephemeral_public_bytes):
     # Deserialize the ephemeral public key
     ephemeral_public_key = serialization.load_pem_public_key(ephemeral_public_bytes)
     
