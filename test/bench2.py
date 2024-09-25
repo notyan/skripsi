@@ -4,15 +4,11 @@ import requests
 import time
 
 level_range = 2
-iteration = 100
-#algorithms =  ["RSA", "ECC", "PQ"]
-algorithms =  ["PQ"]
-#1000000  = ms, 1000000000 = second
-unit = 1000000 
+iteration = 1
+algorithms =  ["RSA", "ECC", "PQ"]
 
 print("BENCHMARKING KEM KEYGEN AND SIGN")
 for alg in algorithms:
-    print(f'ALGORITMA {alg}  \nLevel\tTime')
     for level in range(1,level_range):
         running_time= list()
         rsa_ssk, rsa_vk = rsaalg.keygen(level)
@@ -20,39 +16,40 @@ for alg in algorithms:
         ecdsa_ssk, ecdsa_vk = ecc.keygen(level)
         for i in range(iteration):
             if alg == "PQ":
+                
                 start_time = time.time_ns()
                 sk, pk = kyber.keygen(level)
-                dilithium.sign(level, pk, pq_ssk)
-                if i != 0:
-                    running_time.append(time.time_ns() - start_time)
+                signature = dilithium.sign(level, pk, pq_ssk)
+                running_time.append(time.time_ns() - start_time)   
 
             else:
                 #1. Generate KEMPAIR
                 start_time = time.time_ns()
-                _, pk = rsaalg.keygen(level)
+                #sk, pk = rsaalg.keygen(level)  
+                sk, pk = kyber.keygen(level)         
                 kem_keygen = time.time_ns() - start_time
 
                 pk_bytes = pem.serializeDer(pk, 1)
                 #2. Sign 
                 if alg == "ECC":
                     start_time = time.time_ns()
-                    ecc.sign(pk_bytes, ecdsa_ssk)
+                    signature = ecc.sign(pk_bytes, ecdsa_ssk)
+                    sign_time = time.time_ns() - start_time
                 elif alg == "RSA":
                     start_time = time.time_ns()
-                    rsaalg.sign(pk_bytes, rsa_ssk)
+                    signature = rsaalg.sign(pk_bytes, rsa_ssk)
+                    sign_time = time.time_ns() - start_time
                 else:
                     print("Algorithm outside Scope")
 
-                sign_time = time.time_ns() - start_time
                 running_time.append(sign_time + kem_keygen)     
 
-        avg = (sum(running_time)/len(running_time))/unit
-        print(f'{level} \t{ avg:.4f} ms')
+        avg = (sum(running_time)/len(running_time))/1000000000
+        print(f'Algoritma {alg} level {level} took { avg:.7f} s')
 
 
-print("\nBENCHMARKING VERIFY, ENCAPSULATION, SIGN")
+print("BENCHMARKING VERIFY, ENCAPSULATION, SIGN")
 for alg in algorithms:
-    print(f'ALGORITMA {alg}  \nLevel\t\tTime')
     for level in range(1,level_range):
         #PQ BUILTUP
         pq_ssk, pq_vk = dilithium.keygen(level)
@@ -71,34 +68,33 @@ for alg in algorithms:
         ecdsa_ssk, ecdsa_vk = ecc.keygen(level)
         ecdsa_signature = ecc.sign(pk_bytes, ecdsa_ssk)
 
-        
         running_time= list()
-        print(running_time)
         for i in range(iteration):
             if alg == "PQ":
                 start_time = time.time_ns()
                 is_valid = dilithium.verif(level, pq_pk, pq_signature, pq_vk)       #1. Verify kem pub
                 c, K = kyber.encap(level, pq_pk)                                    #2. Encap K
                 new_signature = dilithium.sign(level, c, pq_ssk)                    #3. Sign c
+                running_time.append(time.time_ns() - start_time)
             elif alg == "ECC":
                 start_time = time.time_ns()
                 is_valid = ecc.verif(rsa_pk, ecdsa_signature, ecdsa_vk)
                 c, K = rsaalg.encap(rsa_pk)
-                signature = ecc.sign(c, ecdsa_ssk)   
+                signature = ecc.sign(c, ecdsa_ssk)
+                running_time.append(time.time_ns() - start_time)   
             else:
                 start_time = time.time_ns()
                 is_valid = rsaalg.verif(rsa_pk, rsa_signature, rsa_vk)
                 c, K = rsaalg.encap(rsa_pk)
                 signature = rsaalg.sign(c, rsa_ssk)
-            running_time.append(time.time_ns() - start_time)   
+                running_time.append(time.time_ns() - start_time)   
 
-        avg = (sum(running_time)/len(running_time))/unit
-        print(f'{level} \t{ avg:.4f} ms')
+        avg = (sum(running_time)/len(running_time))/1000000000
+        print(f'Algoritma {alg} level {level} took { avg:.7f} s')
 
 
-print("\nBENCHMARKING Verify and Decaps")
+print("BENCHMARKING Verify and Decaps")
 for alg in algorithms:
-    print(f'ALGORITMA {alg} \nLevel\tTime')
     for level in range(1,level_range):
         #PQ BUILTUP
         pq_ssk, pq_vk = dilithium.keygen(level)
@@ -125,17 +121,17 @@ for alg in algorithms:
                 start_time = time.time_ns()
                 is_valid = dilithium.verif(level, pq_c, pq_signature, pq_vk)
                 K = kyber.decap(level, pq_pk, pq_c )
+                running_time.append(time.time_ns() - start_time)   
             elif alg == "ECC":
                 start_time = time.time_ns()
                 is_valid = ecc.verif(rsa_c, ecdsa_signature, ecdsa_vk)
-                K = rsaalg.decap(rsa_sk, rsa_c)    
+                K = rsaalg.decap(rsa_sk, rsa_c)
+                running_time.append(time.time_ns() - start_time)    
             else:
                 start_time = time.time_ns()
                 is_valid = rsaalg.verif(rsa_c, rsa_signature, rsa_vk)
                 K = rsaalg.decap(rsa_sk, rsa_c)
-            #Append into list, to get another data insight
-            running_time.append(time.time_ns() - start_time)
+                running_time.append(time.time_ns() - start_time)   
 
-        avg = (sum(running_time)/len(running_time))/unit
-        print(f'{level} \t{ avg:.4f} ms')
-        
+        avg = (sum(running_time)/len(running_time))/1000000000
+        print(f'Algoritma {alg} level {level} took { avg:.7f} s')

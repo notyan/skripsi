@@ -3,6 +3,12 @@ import time
 import timeit
 from utils import dilithium, pem, rsaalg, ecc  
 
+#In MS
+unit = 1000000
+iteration = 5000
+#algorithms =  ["RSA", "ECC", "PQ"]
+algorithms =  ["ECC", "PQ"]
+
 def main():
     # Create the parser
     parser = argparse.ArgumentParser(description="A script to generate AKE Long-Term Secret")
@@ -16,25 +22,24 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
     if args.bench:
-        for alg in ["ECC", "DILITHIUM"]:
+        for alg in algorithms:
+            print(f'ALGORITMA {alg}  \nLevel\tTime')
             for level in range(1,4):
                 running_time= list()
-                for i in range(50):
+                for i in range(iteration):
                     if alg == "RSA":
                         start_time = time.time_ns()
                         rsaalg.keygen(level)
-                        running_time.append(time.time_ns() - start_time)
                     elif alg == "ECC":
                         start_time = time.time_ns()
                         ecc.keygen(level)
-                        running_time.append(time.time_ns() - start_time)
                     else:
                         start_time = time.time_ns()
                         dilithium.keygen(level)
-                        running_time.append(time.time_ns() - start_time)
+                    running_time.append(time.time_ns() - start_time)
                 
-                avg = (sum(running_time)/len(running_time))/1000000000
-                print(f'Algoritma {alg} level {level} took { avg:.9f} s')
+                avg = (sum(running_time)/len(running_time))/unit
+                print(f'{level} \t{ avg:.4f} ms')
             
 
     else:
