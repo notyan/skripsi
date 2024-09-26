@@ -48,9 +48,9 @@ def encap(level, public_key):
     
     return ephemeral_public_key, shared_key
 
-def decap(level, private_key, ephemeral_public_bytes):
-    # Deserialize the ephemeral public key
-    ephemeral_public_key = serialization.load_pem_public_key(ephemeral_public_bytes)
+def decap(level, private_key, ephemeral_public_key):
+    # # Deserialize the ephemeral public key
+    # ephemeral_public_key = serialization.load_pem_public_key(ephemeral_public_bytes)
     
     # Perform key agreement
     shared_key = private_key.exchange(ec.ECDH(), ephemeral_public_key)
