@@ -4,8 +4,8 @@ import timeit
 from functools import partial
 
 
-level_range = 2
-iteration = 1
+level_range = 4
+iteration = 100
 algorithms =  ["RSA", "ECC", "PQ"]
 #algorithms =  ["PQ"]
 #Timeit output are in second, multiply by 1000 to convert to ms
