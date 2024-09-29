@@ -1,18 +1,30 @@
-from fastapi.background import P
 from utils import kyber, pem, dilithium, rsaalg, ecc
 import timeit
 from functools import partial
+import numpy as np
 
 
-level_range = 2
-iteration = 50
-algorithms =  ["RSA", "ECC", "PQ"]
-#algorithms =  ["PQ"]
+level_range = 3
+iteration = 100
+#algorithms =  ["RSA", "ECC", "PQ"]
+algorithms =  ["ECC"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
 
+
+def percentiles(data: list):
+
+    result = {
+        'avg' : round(float(np.average(data)),4),
+        'q50' : round(float(np.percentile(data, 50)),4),
+        'q95' : round(float(np.percentile(data, 95)),4)
+    }
+    return result
+
+
 #Doing Keygeneration, and Signature
 def firstBench(alg, sign_key, level, repetition):
+    recurrence= int(repetition/10)
     if alg == "PQ":
         keygeneration = partial(kyber.keygen, level)
         _, pk_bytes = kyber.keygen(level)
@@ -28,14 +40,19 @@ def firstBench(alg, sign_key, level, repetition):
         pk_bytes = pem.serializeDer(pk, 1)
         signing = partial(rsaalg.sign,level, pk_bytes, sign_key)
 
-    keygen_time = timeit.timeit(keygeneration , number=repetition)
-    sign_time = timeit.timeit(signing , number=repetition)
-    return ((keygen_time + sign_time)/iteration)*unit
+    keygen_time_s = timeit.repeat(keygeneration , number=recurrence, repeat=repetition)
+    sign_time_s = timeit.repeat(signing , number=recurrence, repeat=repetition)
 
+    #Convert data from second to milisecond
+    keygen_time = [ (x * 1000)/recurrence for x in keygen_time_s]
+    sign_time = [ (x * 1000)/recurrence for x in sign_time_s]
+    running_time = [x + y for x,y in zip(keygen_time,sign_time)]
+
+    return percentiles(running_time)
 
 print("BENCHMARKING KEM KEYGEN AND SIGN")
+print("Alg \tLevel \tAvg \t\tMedian \t\t95th")
 for alg in algorithms:
-    print(f'ALGORITMA {alg}  \nLevel\tTime')
     for level in range(1,level_range):
         if alg == "PQ":
             sign_key, _ = dilithium.keygen(level)
@@ -43,11 +60,14 @@ for alg in algorithms:
             sign_key, _ = ecc.keygen(level)
         elif alg == "RSA":
             sign_key, _ = rsaalg.keygen(level)
-
-        print(firstBench(alg, sign_key, level, iteration))
+        result = firstBench(alg, sign_key, level, iteration)
+        print(result)
+        #print(f'{alg} \t{level} \t{result["avg"]} \t\t{result["q50"]} \t\t{result["q95"]}')
+           
 
 
 # def secondBench(alg, level, pk_bytes, sign_key, signature,vk, repetition):
+#     recurrence= int(repetition/10)
 #     if alg == "PQ":
 #         verification = partial(dilithium.verif, level,pk_bytes,signature,vk)    #Verified
 #         encapsulation =  partial(kyber.encap, level, pk_bytes)
@@ -70,17 +90,32 @@ for alg in algorithms:
 #         signing = partial(rsaalg.sign, level, c_bytes, sign_key)
     
 
-#     verification_time = timeit.timeit(verification , number=repetition)
-#     encapsulation_time = timeit.timeit(encapsulation , number=repetition)
-#     sign_time = timeit.timeit(signing , number=repetition)
-#     return ((verification_time + encapsulation_time + sign_time)/iteration)*unit
+#     verification_time_s = timeit.repeat(verification , number=recurrence, repeat=repetition)
+#     encapsulation_time_s = timeit.repeat(encapsulation , number=recurrence, repeat=repetition)
+#     sign_time_s = timeit.repeat(signing , number=recurrence, repeat=repetition)
+#     #avg_time = (sum(verification_time) + sum(encapsulation_time)+ sum(sign_time))/repetition
+#     #return ((avg_time)/recurrence)*unit
+
+#     #Convert data from second to milisecond
+#     verification_time = [ x * 1000 for x in verification_time_s]
+#     encapsulation_time = [ x * 1000 for x in encapsulation_time_s]
+#     sign_time = [ x * 1000 for x in sign_time_s]
+
+#     #Counting Percentile
+#     result = {
+#         'Verification' : percentiles(verification_time),
+#         'Encapsulation' : percentiles(encapsulation_time),
+#         'Sign' : percentiles(sign_time)
+#     }
+    
+#     return result
 
 
 
 # print("\nBENCHMARKING VERIFY, ENCAPSULATION, SIGN")
 # for alg in algorithms:
-#     print(f'ALGORITMA {alg}  \nLevel\t\tTime')
 #     for level in range(1,level_range):
+#         print(f'ALGORITMA {alg}  Level {level}')
 #         if alg == "PQ":
 #             sign_key, vk = dilithium.keygen(level)
 #             _, pk_bytes = kyber.keygen(level)
@@ -96,12 +131,17 @@ for alg in algorithms:
 #             sign_key, vk = rsaalg.keygen(level)
 #             signature = rsaalg.sign(level, pk_bytes, sign_key)
 
-#         print(secondBench(alg, level, pk_bytes, sign_key, signature,vk, iteration))
+#         percentile = secondBench(alg, level, pk_bytes, sign_key, signature,vk, iteration)
+#         for key, value in percentile.items():
+#             print(key)
+#             for i, j in value.items():
+#                 print(f"\t{i}: {j:}")
 
 
 
 # #Third bench already verified by testing each output to see if the verification and decapsulation give valid output
 # def thirdBench(alg, level, sk_bytes: bytes, c_bytes: bytes, signature, vk,  repetition):
+#     recurrence= int(repetition/10)
 #     if alg == "PQ":
 #         verification = partial(dilithium.verif, level, c_bytes, signature, vk)
 #         decapsulation = partial(kyber.decap, level, sk_bytes, c_bytes)
@@ -115,15 +155,27 @@ for alg in algorithms:
 #         sk = pem.der_to_key(sk_bytes, 0)
 #         decapsulation = partial(rsaalg.decap, level, sk, c_bytes)
 
-#     verification_time = timeit.timeit(verification , number=repetition)
-#     decapsulation_time = timeit.timeit(decapsulation , number=repetition)
-#     return ((verification_time + decapsulation_time)/iteration)*unit
+#     verification_time_s = timeit.repeat(verification , number=recurrence, repeat=repetition)
+#     decapsulation_time_s = timeit.repeat(decapsulation , number=recurrence, repeat=repetition)
+
+#     verification_time = [ x * 1000 for x in verification_time_s]
+#     decapsulation_time = [ x * 1000 for x in decapsulation_time_s]
+#     # avg_time = (sum(verification_time) + sum(decapsulation_time))/repetition
+#     # return ((avg_time)/recurrence)*unit
+    
+#     #Counting Percentile
+#     result = {
+#         'Verification' : percentiles(verification_time),
+#         'Decapsulation' : percentiles(decapsulation_time),
+#     }
+    
+#     return result
 
 
 # print("\nBENCHMARKING Verify and Decaps")
 # for alg in algorithms:
-#     print(f'ALGORITMA {alg} \nLevel\tTime')
 #     for level in range(1,level_range):
+#         print(f'ALGORITMA {alg}  Level {level}')
 #         if alg == "PQ":
 #             sign_key, vk = dilithium.keygen(level)
 #             sk_bytes, pk_bytes = kyber.keygen(level)
@@ -150,4 +202,9 @@ for alg in algorithms:
 
 #             c_bytes, K = rsaalg.encap(level, pk) 
 #             signature = rsaalg.sign(level, c_bytes, sign_key)
-#         print(thirdBench(alg, level, sk_bytes, c_bytes, signature, vk, iteration))
+#         percentile = thirdBench(alg, level, sk_bytes, c_bytes, signature, vk, iteration)
+        
+#         for key, value in percentile.items():
+#             print(key)
+#             for i, j in value.items():
+#                 print(f"\t{i}: {j:}")

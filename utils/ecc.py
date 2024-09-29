@@ -6,14 +6,13 @@ from cryptography.hazmat.primitives import serialization
 # Generate a private key using the SECP256R1 curve (one of the commonly used ECC curves)
 def keygen(level):
     if level == 1:
-        secret_key = ec.generate_private_key(ec.BrainpoolP256R1())
+        secret_key = ec.generate_private_key(ec.SECP256R1())
     elif level == 2:
-        secret_key = ec.generate_private_key(ec.BrainpoolP384R1())
+        secret_key = ec.generate_private_key(ec.SECP384R1())
     elif level == 3:
-        secret_key = ec.generate_private_key(ec.BrainpoolP512R1())
-    public_key = secret_key.public_key()
+        secret_key = ec.generate_private_key(ec.SECP521R1())
 
-    return secret_key, public_key
+    return secret_key, secret_key.public_key()
 
 def sign(level, message, secret_key):
     signature = secret_key.sign(
@@ -22,7 +21,7 @@ def sign(level, message, secret_key):
     )
     return signature
 
-def verif(level, message, signature, public_key):
+def verif(level, message, signature: bytes, public_key):
     try:
         public_key.verify(
             signature, 
@@ -36,11 +35,11 @@ def verif(level, message, signature, public_key):
 def encap(level, public_key):
     # Generate an ephemeral key pair
     if level == 1:
-        ephemeral_private_key = ec.generate_private_key(ec.BrainpoolP256R1())
+        ephemeral_private_key = ec.generate_private_key(ec.SECP256R1())
     elif level == 2:
-        ephemeral_private_key = ec.generate_private_key(ec.BrainpoolP384R1())
+        ephemeral_private_key = ec.generate_private_key(ec.SECP384R1())
     elif level == 3:
-        ephemeral_private_key = ec.generate_private_key(ec.BrainpoolP512R1())
+        ephemeral_private_key = ec.generate_private_key(ec.SECP521R1())
     ephemeral_public_key = ephemeral_private_key.public_key()
     
     # Perform key agreement

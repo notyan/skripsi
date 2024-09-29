@@ -1,3 +1,4 @@
+from numpy import byte
 import oqs
 
 def keygen(level):
@@ -12,7 +13,7 @@ def keygen(level):
     secret_key = signer.export_secret_key()
     return secret_key, verification_key
 
-def sign(level, message, secret_key):
+def sign(level, message: bytes, secret_key):
     alg = "Dilithium2" if level == 1 else "Dilithium3" if level == 2 else "Dilithium5"
 
     signer = oqs.Signature(alg, secret_key)
