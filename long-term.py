@@ -5,9 +5,9 @@ from utils import dilithium, pem, rsaalg, ecc
 
 #In MS
 unit = 1000000
-iteration = 5000
-#algorithms =  ["RSA", "ECC", "PQ"]
-algorithms =  ["ECC", "PQ"]
+iteration = 10
+algorithms =  ["RSA", "ECC", "PQ"]
+#algorithms =  ["RSA", "PQ"]
 
 def main():
     # Create the parser
@@ -24,7 +24,7 @@ def main():
     if args.bench:
         for alg in algorithms:
             print(f'ALGORITMA {alg}  \nLevel\tTime')
-            for level in range(1,4):
+            for level in range(1,2):
                 running_time= list()
                 for i in range(iteration):
                     if alg == "RSA":

@@ -2,17 +2,17 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import serialization
+from Crypto.PublicKey import ECC
 
 # Generate a private key using the SECP256R1 curve (one of the commonly used ECC curves)
 def keygen(level):
     if level == 1:
-        secret_key = ec.generate_private_key(ec.SECP256R1())
+        return ECC.generate(curve='p256')
     elif level == 2:
-        secret_key = ec.generate_private_key(ec.SECP384R1())
+        return ECC.generate(curve='p384')
     elif level == 3:
-        secret_key = ec.generate_private_key(ec.SECP521R1())
+        return ECC.generate(curve='p521')
 
-    return secret_key, secret_key.public_key()
 
 def sign(level, message, secret_key):
     signature = secret_key.sign(
