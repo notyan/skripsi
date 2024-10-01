@@ -10,6 +10,7 @@ key2 = ECC.generate(curve='p256')
 key = ECC.generate(curve='p256')
 key2 = ECC.generate(curve='p256') 
 
+key = ECC.generate(curve='p256')
 sk_bytes = key.export_key(format="DER")
 pk_bytes = key.public_key().export_key(format="DER")
 
