@@ -7,11 +7,13 @@ from Crypto.PublicKey import ECC
 # Generate a private key using the SECP256R1 curve (one of the commonly used ECC curves)
 def keygen(level):
     if level == 1:
-        return ECC.generate(curve='p256')
+        secret_key = ec.generate_private_key(ec.BrainpoolP256R1())
     elif level == 2:
-        return ECC.generate(curve='p384')
+        secret_key = ec.generate_private_key(ec.BrainpoolP384R1())
     elif level == 3:
-        return ECC.generate(curve='p521')
+        secret_key = ec.generate_private_key(ec.BrainpoolP512R1())
+
+    return secret_key, secret_key.public_key()
 
 
 def sign(level, message, secret_key):
