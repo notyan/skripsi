@@ -3,5 +3,5 @@ __pycache__/
 *.py[cod]
 *$py.class
 keys/
-utils/__pycache__
+utils/__pycache__/
 *.py.lprof
