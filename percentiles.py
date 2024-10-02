@@ -26,18 +26,18 @@ def percentiles(data: list):
 def firstBench(alg, sign_key, level, repetition):
     recurrence= int(repetition/10)
     if alg == "PQ":
-        keygeneration = partial(kyber.keygen, level)
         _, pk_bytes = kyber.keygen(level)
+        keygeneration = partial(kyber.keygen, level)
         signing = partial(dilithium.sign, level, pk_bytes, sign_key)
     elif alg == "ECC":
-        keygeneration = partial(ecc.keygen, level)
         _, pk = ecc.keygen(level)
         pk_bytes = pem.serializeDer(pk, 1)
+        keygeneration = partial(ecc.keygen, level)
         signing = partial(ecc.sign,level, pk_bytes, sign_key)
     elif alg == "RSA":
-        keygeneration = partial(rsaalg.keygen,level)
         _, pk = rsaalg.keygen(level)
         pk_bytes = pem.serializeDer(pk, 1)
+        keygeneration = partial(rsaalg.keygen,level)
         signing = partial(rsaalg.sign,level, pk_bytes, sign_key)
 
     keygen_time_s = timeit.repeat(keygeneration , number=recurrence, repeat=repetition)
@@ -67,24 +67,24 @@ for alg in algorithms:
 def secondBench(alg, level, pk_bytes, sign_key, signature,vk, repetition):
     recurrence= int(repetition/10)
     if alg == "PQ":
+        c_bytes, _ = kyber.encap(level, pk_bytes)
         verification = partial(dilithium.verif, level,pk_bytes,signature,vk)    #Verified
         encapsulation =  partial(kyber.encap, level, pk_bytes)
-        c_bytes, _ = kyber.encap(level, pk_bytes)
         signing = partial(dilithium.sign, level, c_bytes, sign_key)
 
     elif alg == "ECC":
         pk = pem.der_to_key(pk_bytes, 1)
-        verification = partial(ecc.verif, level, pk_bytes, signature, vk)    #Verified
-        encapsulation =  partial(ecc.encap, level, pk)
         c, _ = ecc.encap(level, pk)
         c_bytes = pem.serializeDer(c, 1)
+        verification = partial(ecc.verif, level, pk_bytes, signature, vk)    #Verified
+        encapsulation =  partial(ecc.encap, level, pk)
         signing = partial(ecc.sign, level, c_bytes, sign_key)
         
     elif alg == "RSA":
         pk = pem.der_to_key(pk_bytes, 1)
+        c_bytes, _ = rsaalg.encap(level, pk)
         verification = partial(rsaalg.verif, level,pk_bytes,signature, vk)    #Verified
         encapsulation =  partial(rsaalg.encap, level, pk)
-        c_bytes, _ = rsaalg.encap(level, pk)
         signing = partial(rsaalg.sign, level, c_bytes, sign_key)
     
     verification_time_s = timeit.repeat(verification , number=recurrence, repeat=repetition)
