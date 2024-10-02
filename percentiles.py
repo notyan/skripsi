@@ -5,7 +5,7 @@ import numpy as np
 
 
 level_range = 4
-iteration = 10
+iteration = 100
 #algorithms =  ["PQ", "ECC", "RSA"]
 algorithms =  ["ECC", "PQ", "RSA"]
 #Timeit output are in second, multiply by 1000 to convert to ms
