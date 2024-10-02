@@ -1,18 +1,19 @@
 from line_profiler import profile
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ec
+from Crypto.PublicKey import ECC
 
-from utils import dilithium,ecc, rsaalg 
-from Crypto.PublicKey import ECC, RSA
+
+from utils import ecc
+
 
 @profile
 def dil(level):
     ec.generate_private_key(ec.BrainpoolP256R1())
     ec.generate_private_key(ec.BrainpoolP384R1())
     ec.generate_private_key(ec.BrainpoolP512R1())
-
-    ec.generate_private_key(ec.SECP256R1())
-    ec.generate_private_key(ec.SECP384R1())
-    ec.generate_private_key(ec.SECP521R1())
+    ecc.keygen(1)
+    ecc.keygen(2)
+    ecc.keygen(3)
 
 
 
