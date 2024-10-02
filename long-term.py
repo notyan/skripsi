@@ -37,32 +37,32 @@ def main():
         recurrence= int(iteration/10)
         for level in range(1,level_range):
             kyber_keygen = partial(kyber.keygen, level)
-            dilithium_keygen = partial(dilithium.keygen, level)
-            ecc_keygen = partial(ecc.keygen, level)
-            rsaalg_keygen = partial(rsaalg.keygen, level)
-
             kyber_time_s = timeit.repeat(kyber_keygen , number=recurrence, repeat=iteration)
-            dilithium_time_s = timeit.repeat(dilithium_keygen , number=recurrence, repeat=iteration)
-            ecc_time_s = timeit.repeat(ecc_keygen , number=recurrence, repeat=iteration)
-            rsaalg_time_s = timeit.repeat(rsaalg_keygen , number=recurrence, repeat=iteration)
-                #Convert data from second to milisecond
             kyber_time = [ (x * 1000)/recurrence for x in kyber_time_s]
-            dilithium_time = [ (x * 1000)/recurrence for x in dilithium_time_s]
-            ecc_time = [ (x * 1000)/recurrence for x in ecc_time_s]
-            rsaalg_time = [ (x * 1000)/recurrence for x in rsaalg_time_s]
-
             kyber_res = percentiles(kyber_time)
-            dilithium_res = percentiles(dilithium_time)
-            ecc_res = percentiles(ecc_time)
-            rsaalg_res = percentiles(rsaalg_time)
-
-            print(f'Keygen , Kyber ,{level} ,{kyber_res["avg"]} ,{kyber_res["q50"]} ,{kyber_res["q95"]}')
-            print(f'Keygen , Dilithium ,{level} ,{dilithium_res["avg"]} ,{dilithium_res["q50"]} ,{dilithium_res["q95"]}')
-            print(f'Keygen , ECC ,{level} ,{ecc_res["avg"]} ,{ecc_res["q50"]} ,{ecc_res["q95"]}')
-            print(f'Keygen , RSA ,{level} ,{rsaalg_res["avg"]} ,{rsaalg_res["q50"]} ,{rsaalg_res["q95"]}')
-
+            print(f'Keygen, Kyber, {level}, {kyber_res["avg"]}, {kyber_res["q50"]}, {kyber_res["q95"]}')
         
-            
+        for level in range(1,level_range):
+            dilithium_keygen = partial(dilithium.keygen, level)
+            dilithium_time_s = timeit.repeat(dilithium_keygen , number=recurrence, repeat=iteration)
+            dilithium_time = [ (x * 1000)/recurrence for x in dilithium_time_s]
+            dilithium_res = percentiles(dilithium_time)
+            print(f'Keygen, Dilithium, {level}, {dilithium_res["avg"]}, {dilithium_res["q50"]}, {dilithium_res["q95"]}')
+
+        for level in range(1,level_range):
+            ecc_keygen = partial(ecc.keygen, level)
+            ecc_time_s = timeit.repeat(ecc_keygen , number=recurrence, repeat=iteration)
+            ecc_time = [ (x * 1000)/recurrence for x in ecc_time_s]
+            ecc_res = percentiles(ecc_time)
+            print(f'Keygen, ECC, {level}, {ecc_res["avg"]}, {ecc_res["q50"]}, {ecc_res["q95"]}')
+
+        for level in range(1,level_range):
+            rsaalg_keygen = partial(rsaalg.keygen, level)
+            rsaalg_time_s = timeit.repeat(rsaalg_keygen , number=recurrence, repeat=iteration)
+            rsaalg_time = [ (x * 1000)/recurrence for x in rsaalg_time_s]
+            rsaalg_res = percentiles(rsaalg_time)
+            print(f'Keygen, RSA, {level}, {rsaalg_res["avg"]}, {rsaalg_res["q50"]}, {rsaalg_res["q95"]}')
+
 
     else:
         # RUN KEYGEN AND WRITE TO FILE
