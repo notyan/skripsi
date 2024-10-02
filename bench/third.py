@@ -11,7 +11,6 @@ algorithms =  ["RSA", "ECC", "PQ"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
 
-
 def percentiles(data: list):
 
     result = {

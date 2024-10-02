@@ -1,7 +1,8 @@
 from operator import truediv
-from utils import kyber, pem, dilithium, rsaalg
+from ..utils import kyber, pem, dilithium, rsaalg
 import requests
 import time
+
 
 iteration = 100
 level_range = 4

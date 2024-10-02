@@ -1,7 +1,5 @@
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives import serialization
 
 # Generate a private key using the SECP256R1 curve (one of the commonly used ECC curves)
 def keygen(level):
