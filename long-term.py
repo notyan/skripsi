@@ -56,7 +56,7 @@ def main():
             ecc_res = percentiles(ecc_time)
             print(f'Keygen, ECC, {level}, {ecc_res["avg"]}, {ecc_res["q50"]}, {ecc_res["q95"]}')
 
-        for level in range(1,level_range):
+        for level in range(1, level_range):
             rsaalg_keygen = partial(rsaalg.keygen, level)
             rsaalg_time_s = timeit.repeat(rsaalg_keygen , number=recurrence, repeat=iteration)
             rsaalg_time = [ (x * 1000)/recurrence for x in rsaalg_time_s]
