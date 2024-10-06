@@ -1,4 +1,4 @@
-from utils import kyber, pem, dilithium, rsaalg, files
+from utils import ecc, kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
 
@@ -20,28 +20,29 @@ def main():
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
         #1. Generate Kem keypair and write the SK into file
-        sk, pk = kyber.keygen(args.level)
-        files.writes(args.pq, False, pem.sk_bytes_to_pem(sk), "keys/kyber")
+        sk, pk_bytes = kyber.keygen(args.level)
+        files.writes(args.pq, False, sk, "keys/kyber")
 
         #2. Load the ssk then Sign the Public Key
         ssk = files.reads(args.pq, False, 'keys/dilithium')
-        signature = dilithium.sign(args.level, pk, ssk)
+        signature = dilithium.sign(args.level, pk_bytes, ssk)
     else: 
         #1. Generate Kem  keypair and write the secret Kem Keys into file
-        sk, pk = rsaalg.keygen(args.level)
-        files.writes(args.pq, False, ssk, "keys/rsakem")
+        sk, pk = ecc.keygen(args.level)
+        pk_bytes = pem.serializeDer(pk, 1)
+        files.writes(args.pq, False, sk, "keys/ecdh")
 
         #2.  Sign the Public Key
-        ssk = files.reads(args.pq, False, 'keys/rsasig')
+        ssk = files.reads(args.pq, False, 'keys/ecdsa')
         #Change public key pem to bytes that can be signed
-        signature = rsaalg.sign(pem.serializeDer(pk, 1), ssk)
+        signature = ecc.sign(args.level, pk_bytes, ssk)
 
     #3. Sending Requsest To server 
     response = requests.post(api_url + "/api/sessionGen", 
     #Bytes need to transported as Hex to reduce size
     json={
         "isPq": args.pq,
-        "kemPub": pk.hex(),
+        "kemPub": pk_bytes.hex(),
         "signature": signature.hex(),
         "sigLevel": args.level,
         },
@@ -53,12 +54,12 @@ def main():
     sv_signature = response.json().get("signature")
     if args.pq:
         #Open server public key
-        sv_vk = files.reads(True, True, 'keys/sv_dilithium.pub')
+        sv_vk = files.reads(True, True, 'keys/sv_dilithium')
         is_valid = dilithium.verif(args.level, bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
         print(is_valid)
     else: 
-        sv_vk = files.reads(False, True, 'keys/sv_rsasig.pub')
-        is_valid = rsaalg.verif(bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
+        sv_vk = files.reads(False, True, 'keys/sv_ecdsa')
+        is_valid = ecc.verif(args.level, bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
         print(is_valid)
 
     if is_valid == True:
