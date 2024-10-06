@@ -1,4 +1,5 @@
 import argparse
+from ast import arg
 import timeit
 from utils import dilithium, pem, rsaalg, ecc,kyber
 from functools import partial  
@@ -87,24 +88,26 @@ def main():
             print(f'Keygen, RSA, {level}, {rsaalg_res["avg"]}, {rsaalg_res["q50"]}, {rsaalg_res["q95"]}')
 
 
+
     else:
-        # RUN KEYGEN AND WRITE TO FILE
-        if args.pq:
-            ssk, vk = dilithium.keygen(args.level)
-            if args.output:
-                writeToFile(True, False, ssk, args.output)
-                writeToFile(True, True, vk, args.output)
-            else:
-                print(pem.sk_bytes_to_pem(ssk))
-                print(pem.pk_bytes_to_pem(vk))
-        else: 
-            ssk, vk = ecc.keygen(args.level)
-            if args.output:
-                writeToFile(False, False, ssk, args.output)
-                writeToFile(False, True, vk, args.output)
-            else:
-                print(pem.serialize(ssk, 0).decode("utf-8"))
-                print(pem.serialize(vk, 1).decode("utf-8"))
+        print(args.pq)
+    #     # RUN KEYGEN AND WRITE TO FILE
+    #     if args.pq:
+    #         ssk, vk = dilithium.keygen(args.level)
+    #         if args.output:
+    #             writeToFile(True, False, ssk, args.output)
+    #             writeToFile(True, True, vk, args.output)
+    #         else:
+    #             print(pem.sk_bytes_to_pem(ssk))
+    #             print(pem.pk_bytes_to_pem(vk))
+    #     else: 
+    #         ssk, vk = ecc.keygen(args.level)
+    #         if args.output:
+    #             writeToFile(False, False, ssk, args.output)
+    #             writeToFile(False, True, vk, args.output)
+    #         else:
+    #             print(pem.serialize(ssk, 0).decode("utf-8"))
+    #             print(pem.serialize(vk, 1).decode("utf-8"))
 
         
 if __name__ == "__main__":

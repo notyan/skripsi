@@ -1,7 +1,5 @@
 from utils import dilithium, pem, rsaalg, ecc,kyber, files
 
-
-
 output = "keys/ecctest"
 message = b"TEST"
 ssk, vk = ecc.keygen(1)

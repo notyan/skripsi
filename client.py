@@ -1,8 +1,6 @@
-from operator import truediv
 from utils import kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
-import time
 
 api_url = "http://127.0.0.1:8000/"
 #main Function
@@ -21,42 +19,28 @@ def main():
 
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
-        isPq = True
         #1. Generate Kem keypair and write the SK into file
         sk, pk = kyber.keygen(args.level)
-        files.writes(True, False, pem.sk_bytes_to_pem(sk), "keys/kyber")
-
-        # f = open("keys/kyber", "w")
-        # f.write( pem.sk_bytes_to_pem(sk))
-        # f.close()
+        files.writes(args.pq, False, pem.sk_bytes_to_pem(sk), "keys/kyber")
 
         #2. Load the ssk then Sign the Public Key
-        #ssk_pem = open('keys/dilithium', "r").read()
-        #ssk = pem.sk_pem_to_bytes(ssk_pem)
-        ssk = files.writes(True, False, 'keys/dilithium')
+        ssk = files.reads(args.pq, False, 'keys/dilithium')
         signature = dilithium.sign(args.level, pk, ssk)
-
     else: 
-        isPq = False
-        #1. Generate Kem  keypair
+        #1. Generate Kem  keypair and write the secret Kem Keys into file
         sk, pk = rsaalg.keygen(args.level)
-        #Write the secret Kem Keys into file
-        f = open("keys/rsakem", "wb")
-        f.write( pem.serialize(sk, 0))
-        f.close()
-
-        #Change public key pem to bytes that can be signed
-        pk = pem.serializeDer(pk, 1)
+        files.writes(args.pq, False, ssk, "keys/rsakem")
 
         #2.  Sign the Public Key
-        ssk_pem =  open('keys/rsasig', "rb").read()
-        ssk = pem.pem_to_key(ssk_pem, 0)
-        signature = rsaalg.sign(pk, ssk)
+        ssk = files.reads(args.pq, False, 'keys/rsasig')
+        #Change public key pem to bytes that can be signed
+        signature = rsaalg.sign(pem.serializeDer(pk, 1), ssk)
 
     #3. Sending Requsest To server 
     response = requests.post(api_url + "/api/sessionGen", 
+    #Bytes need to transported as Hex to reduce size
     json={
-        "isPq": isPq,
+        "isPq": args.pq,
         "kemPub": pk.hex(),
         "signature": signature.hex(),
         "sigLevel": args.level,
@@ -67,15 +51,13 @@ def main():
     #4. Process Response from server
     sv_ciphertext = response.json().get("ciphertext")
     sv_signature = response.json().get("signature")
-    if isPq == True:
+    if args.pq:
         #Open server public key
-        sv_vk_pem = open('keys/sv_dilithium.pub', "r").read()   #Read the sv_vk PEM from te file
-        sv_vk = pem.pk_pem_to_bytes(sv_vk_pem)                  #Convert into bytes
+        sv_vk = files.reads(True, True, 'keys/sv_dilithium.pub')
         is_valid = dilithium.verif(args.level, bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
         print(is_valid)
     else: 
-        sv_vk_pem = open('keys/sv_rsasig.pub', "rb").read()
-        sv_vk = pem.pem_to_key(sv_vk_pem, 1)
+        sv_vk = files.reads(False, True, 'keys/sv_rsasig.pub')
         is_valid = rsaalg.verif(bytes.fromhex(sv_ciphertext), bytes.fromhex(sv_signature), sv_vk)
         print(is_valid)
 
