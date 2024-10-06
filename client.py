@@ -1,5 +1,5 @@
 from operator import truediv
-from utils import kyber, pem, dilithium, rsaalg
+from utils import kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
 import time
@@ -19,21 +19,21 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
-
-
-
     # RUN KEYGEN AND WRITE TO FILE
     if args.pq:
         isPq = True
         #1. Generate Kem keypair and write the SK into file
         sk, pk = kyber.keygen(args.level)
-        f = open("keys/kyber", "w")
-        f.write( pem.sk_bytes_to_pem(sk))
-        f.close()
+        files.writes(True, False, pem.sk_bytes_to_pem(sk), "keys/kyber")
+
+        # f = open("keys/kyber", "w")
+        # f.write( pem.sk_bytes_to_pem(sk))
+        # f.close()
 
         #2. Load the ssk then Sign the Public Key
-        ssk_pem = open('keys/dilithium', "r").read()
-        ssk = pem.sk_pem_to_bytes(ssk_pem)
+        #ssk_pem = open('keys/dilithium', "r").read()
+        #ssk = pem.sk_pem_to_bytes(ssk_pem)
+        ssk = files.writes(True, False, 'keys/dilithium')
         signature = dilithium.sign(args.level, pk, ssk)
 
     else: 
@@ -45,7 +45,7 @@ def main():
         f.write( pem.serialize(sk, 0))
         f.close()
 
-        #Change public key pem to bytes that can be used
+        #Change public key pem to bytes that can be signed
         pk = pem.serializeDer(pk, 1)
 
         #2.  Sign the Public Key

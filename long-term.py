@@ -20,6 +20,28 @@ def percentiles(data: list):
     }
     return result
 
+def writeToFile(pq, isPub, key, path):
+    
+    if isPub:
+        f = open(path + ".pub", "w")
+        if pq:
+            f.write(pem.pk_bytes_to_pem(key))
+        else:
+            f.write(pem.serialize(key, 1).decode("utf-8"))
+        f.close()
+        print("Public Key Written into " + path + ".pub")
+    else:
+        f = open(path, "w")
+        if pq:
+            f.write(pem.sk_bytes_to_pem(key))
+        else:
+            f.write(pem.serialize(key, 0).decode("utf-8"))  
+        f.close()
+        print("Private Key Written into " + path)
+
+            
+
+
 def main():
     # Create the parser
     parser = argparse.ArgumentParser(description="A script to generate AKE Long-Term Secret")
@@ -28,6 +50,7 @@ def main():
     parser.add_argument('level', type=int, help='Security Level from 1-3')
     parser.add_argument('-pq' , action='store_true',  help="Use Post Quantum Cryptograpy")
     parser.add_argument('-b', '--bench',action='store_true', help="Run Benchmark")
+    parser.add_argument('-o', '--output',required=False , help="Store the keypair into file")
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
 
     # Parse the arguments
@@ -68,24 +91,21 @@ def main():
         # RUN KEYGEN AND WRITE TO FILE
         if args.pq:
             ssk, vk = dilithium.keygen(args.level)
-        
-            f = open("keys/dilithium", "w")
-            #CONVERT TO PEM, than write to file
-            f.write( pem.sk_bytes_to_pem(ssk))
-            f.close()
-            f = open("keys/dilithium.pub", "w")
-            #CONVERT TO PEM, than write to file
-            f.write(pem.pk_bytes_to_pem(vk))
-            f.close()
+            if args.output:
+                writeToFile(True, False, ssk, args.output)
+                writeToFile(True, True, vk, args.output)
+            else:
+                print(pem.sk_bytes_to_pem(ssk))
+                print(pem.pk_bytes_to_pem(vk))
         else: 
-            ssk, vk = rsaalg.keygen(args.level)
-            f = open("keys/ecdsa", "wb")
-            f.write(pem.serialize(ssk, 0 ))
-            f.close()
+            ssk, vk = ecc.keygen(args.level)
+            if args.output:
+                writeToFile(False, False, ssk, args.output)
+                writeToFile(False, True, vk, args.output)
+            else:
+                print(pem.serialize(ssk, 0).decode("utf-8"))
+                print(pem.serialize(vk, 1).decode("utf-8"))
 
-            f = open("keys/ecdsa.pub", "wb")
-            f.write(pem.serialize(vk, 1))
-            f.close()
         
 if __name__ == "__main__":
     main()

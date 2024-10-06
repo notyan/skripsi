@@ -69,13 +69,14 @@ def serializeDer(key, type):
         return("ERROR KEY OUTSIDE SCOPE")
 
 
+#Convert Pem into Instance
 def pem_to_key(key, type):
     if type == 0:
         return (serialization.load_pem_private_key(key, None))
     elif type == 1:
         return(serialization.load_pem_public_key(key, None))
     
-    
+#Convert Bytes into Instance
 def der_to_key(key, type):
     if type == 0:
         return (serialization.load_der_private_key(key, None))
