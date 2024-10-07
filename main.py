@@ -21,8 +21,6 @@ async def start(keys: Protocol):
     if keys.isPq :
         #open Client Public Keys
         cl_vk = files.reads(keys.isPq, True, 'keys/dilithium')
-        
-        #Verify PK using client_vk
         #kempub and signature are sent by hex, so we need to convert it back to bytes
         is_valid = dilithium.verif(keys.sigLevel, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
     else :
@@ -39,8 +37,10 @@ async def start(keys: Protocol):
             sv_ssk = files.reads(keys.isPq, False, 'keys/sv_dilithium') 
             signature = dilithium.sign(keys.sigLevel, c_bytes, sv_ssk)
         else:
-            #print(bytes.fromhex(keys.kemPub))
-            kemPublic_bytes = bytes.fromhex(keys.kemPub)   
+            kemPublic_bytes = bytes.fromhex(keys.kemPub) 
+            #TODO change this block for better process 
+            #print(kemPublic_bytes.encode())  
+            #kemPublic = pem.serializeDer(kemPublic_bytes.encode(), 1)
             kemPublic_pem = pem.pk_bytes_to_pem(kemPublic_bytes)        #Change bytes to pem
             kemPublic = pem.pem_to_key(kemPublic_pem.encode(), 1)       #Encode pem -> bytes -> instance
             c, K = ecc.encap(keys.sigLevel, kemPublic)
@@ -65,8 +65,6 @@ def read_item(item_id: int, q: Union[str, None] = None):
 @app.post("/api/bytesToPem")
 async def  bytesConvert(keys: Protocol):
     return {keys.pubkey}
-
-
 
 @app.post("/api/sessionStart")
 async def start(keys: Protocol):

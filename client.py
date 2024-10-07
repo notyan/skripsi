@@ -6,12 +6,13 @@ api_url = "http://127.0.0.1:8000/"
 #main Function
 def main():
     # Create the parser
-    parser = argparse.ArgumentParser(description="A simple script to demonstrate argparse.")
+    parser = argparse.ArgumentParser(description="AKE Using ECDH and ECDSA")
 
     # Add arguments
     parser.add_argument('level', type=int, help='Security Level from 1-3')
-    parser.add_argument('-pq' , action='store_true',  help="Use Post Quantum Cryptograpy")
-    parser.add_argument('-b', '--bench',action='store_true', help="Run Benchmark")
+    parser.add_argument('-pq' , action='store_true',  help="AKE Using Kyber and Dilithium")
+    parser.add_argument('-b', '--bench', action='store_true', help="Run Benchmark")
+    parser.add_argument('-rsa', action='store_true', help="AKE Using ECDH and RSASign")
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
 
     # Parse the arguments
@@ -36,6 +37,7 @@ def main():
         ssk = files.reads(args.pq, False, 'keys/ecdsa')
         #Change public key pem to bytes that can be signed
         signature = ecc.sign(args.level, pk_bytes, ssk)
+        print(pk_bytes)
 
     #3. Sending Requsest To server 
     response = requests.post(api_url + "/api/sessionGen", 
