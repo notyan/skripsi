@@ -1,6 +1,8 @@
 import argparse
 from ast import arg
 import timeit
+
+import rsa
 from utils import dilithium, pem, rsaalg, ecc,kyber
 from functools import partial  
 import numpy as np
@@ -45,13 +47,14 @@ def writeToFile(pq, isPub, key, path):
 
 def main():
     # Create the parser
-    parser = argparse.ArgumentParser(description="A script to generate AKE Long-Term Secret")
+    parser = argparse.ArgumentParser(description="A script to generate AKE Long-Term Secret using ECC")
 
     # Add arguments
     parser.add_argument('level', type=int, help='Security Level from 1-3')
     parser.add_argument('-pq' , action='store_true',  help="Use Post Quantum Cryptograpy")
     parser.add_argument('-b', '--bench',action='store_true', help="Run Benchmark")
     parser.add_argument('-o', '--output',required=False , help="Store the keypair into file")
+    parser.add_argument('-rsa', action='store_true', help="Use RSA ")
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
 
     # Parse the arguments
@@ -94,16 +97,16 @@ def main():
         if args.pq:
             ssk, vk = dilithium.keygen(args.level)
             if args.output:
-                writeToFile(True, False, ssk, args.output)
-                writeToFile(True, True, vk, args.output)
+                writeToFile(args.pq, False, ssk, args.output)
+                writeToFile(args.pq, True, vk, args.output)
             else:
                 print(pem.sk_bytes_to_pem(ssk))
                 print(pem.pk_bytes_to_pem(vk))
         else: 
-            ssk, vk = ecc.keygen(args.level)
+            ssk, vk = rsaalg.keygen(args.level) if args.rsa else ecc.keygen(args.level)
             if args.output:
-                writeToFile(False, False, ssk, args.output)
-                writeToFile(False, True, vk, args.output)
+                writeToFile(args.pq, False, ssk, args.output)
+                writeToFile(args.pq, True, vk, args.output)
             else:
                 print(pem.serialize(ssk, 0).decode("utf-8"))
                 print(pem.serialize(vk, 1).decode("utf-8"))
