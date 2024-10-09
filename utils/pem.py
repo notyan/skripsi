@@ -1,4 +1,5 @@
 import base64
+from curses import raw
 from cryptography.hazmat.primitives import serialization
 ##Should i remove the header?
 def bytes_to_pem(key_bytes, key_type="PUBLIC KEY"):
@@ -41,7 +42,7 @@ def serialize(key, type):
     if type == 0:
         return(key.private_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         ))
     elif type == 1:
@@ -57,7 +58,7 @@ def serializeDer(key, type):
     if type == 0:
         return(key.private_bytes(
             encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         ))
     elif type == 1:
@@ -67,7 +68,6 @@ def serializeDer(key, type):
         ))
     else:
         return("ERROR KEY OUTSIDE SCOPE")
-
 
 #Convert Pem into Instance
 def pem_to_key(key, type):
