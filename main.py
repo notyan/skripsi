@@ -7,6 +7,7 @@ app = FastAPI()
 
 class Protocol(BaseModel):
     isPq: bool
+    test: int
     isRsa: bool
     kemPub: str
     signature: str
@@ -29,7 +30,6 @@ async def start(keys: Protocol):
             cl_vk = files.reads(keys.isPq, True, 'keys/cl_rsa')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-
         else:
             cl_vk = files.reads(keys.isPq, True, 'keys/cl_ecdsa')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
@@ -56,12 +56,20 @@ async def start(keys: Protocol):
             else:
                 sv_ssk = files.reads(keys.isPq, False, 'keys/sv_ecdsa') 
                 signature = ecc.sign(keys.level, c_bytes, sv_ssk)
-
+        #Sent The signature alongside the ciphertext
+        if keys.test != 0:
+            # print(bytes.fromhex(keys.kemPub)[keys.test:keys.test*2])
+            # print(bytes.fromhex(keys.signature)[keys.test:keys.test*2])
+            # print(signature[keys.test:keys.test*2])
+            # print(c_bytes[keys.test:keys.test*2])
+            # print("\n")
+            print(K)
+            
+        return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
+    
     else: 
-        print("Verification Invalid")
+        print("Verification Invalid Maybe Somebody change the data")
 
-    # #Sent The signature alongside the ciphertext
-    return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
 
 
 
