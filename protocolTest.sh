@@ -2,6 +2,7 @@
 #Generate Keypair 
 algorithm=("dilithium" "ecdsa" "rsa")
 #algorithm=("dilithium" "ecdsa")
+#Test For normal condition
 for alg in "${algorithm[@]}"
 do
     for i in {1..3}

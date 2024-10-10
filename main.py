@@ -81,6 +81,7 @@ async def start(keys: Protocol):
 class PublicKey(BaseModel):
     cl_vk: str
 
+
 @app.post("/api/vkExchange")
 async def vkExchange(keys: PublicKey):
     keysizes = {
@@ -88,16 +89,21 @@ async def vkExchange(keys: PublicKey):
         92 : 'ecdsa1',  124: 'ecdsa2', 158 : 'ecdsa3',
         422 : 'rsa1', 998 : 'rsa2', 1958 : 'rsa3',
     }
+    #Getting Security and algorithm type based on the public key sent
     result = keysizes[len(bytes.fromhex(keys.cl_vk))]
     cl_vk_bytes = bytes.fromhex(keys.cl_vk)
     if "dil" in result:
+        #write the Client VK into file
         files.writes(True, True, cl_vk_bytes, "keys/cl_vk")
+        #Readt server VK
         sv_vk_bytes = files.reads(True, True, "../keys/sv_" + result)
     else:
         cl_vk = pem.der_to_key(cl_vk_bytes, 1)
         files.writes(False, True,cl_vk, "keys/cl_vk")
         sv_vk = files.reads(False, True, "../keys/sv_" + result)
         sv_vk_bytes = pem.serializeDer(sv_vk, 1)
+    
+    #Send back the Server VK to client
     return {"sv_vk" : sv_vk_bytes.hex()}
 
 @app.post("/api/sessionStart")

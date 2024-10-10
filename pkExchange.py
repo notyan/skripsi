@@ -17,6 +17,7 @@ def main():
 
     # Parse the arguments
     args = parser.parse_args()
+    #try to read the client Verification key and determines the algorithms
     try:
         vk = files.reads(True, True, args.file[:-4])
     except Exception as e:
@@ -26,7 +27,6 @@ def main():
             print(f'Make Sure the file {args.file} exists')
             return(0)
 
-    #print(vk.hex())
     response = requests.post(
         api_url + "/api/vkExchange", 
         json= {"cl_vk": vk.hex()},
@@ -35,6 +35,7 @@ def main():
 
     vk_bytes = bytes.fromhex(response.json().get("sv_vk"))
     
+    #write the server verification key and write to file
     try:
         files.writes(True, True, vk_bytes, "keys/sv_vk", args.silent)
     except Exception as e:
