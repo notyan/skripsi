@@ -7,13 +7,13 @@ do
     do
         case "$alg" in
             "dilithium")
-                python long-term.py $i -o ../keys/dil$i -pq
+                python long-term.py $i -o ../keys/sv_dil$i -pq
                 ;;
             "rsa")
-                python long-term.py $i -o ../keys/rsa$i -rsa
+                python long-term.py $i -o ../keys/sv_rsa$i -rsa
                 ;;
             *)
-                python long-term.py $i -o ../keys/ecdsa$i
+                python long-term.py $i -o ../keys/sv_ecdsa$i
                 ;;
         esac
     done

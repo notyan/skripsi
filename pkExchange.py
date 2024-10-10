@@ -13,37 +13,35 @@ def main():
 
     # Add arguments
     parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
+    parser.add_argument('--silent', action='store_true', help="Show no stdout on file writes")
 
     # Parse the arguments
     args = parser.parse_args()
     try:
-        pk = files.reads(True, True, args.file[:-4])
+        vk = files.reads(True, True, args.file[:-4])
     except Exception as e:
         try:
-            pk = files.reads(False, True, args.file[:-4])
+            vk = files.reads(False, True, args.file[:-4])
         except Exception as e:
             print(f'Make Sure the file {args.file} exists')
             return(0)
 
-    #print(pk.hex())
+    #print(vk.hex())
     response = requests.post(
-        api_url + "/api/pkExchange", 
-        json= {"pk": pk.hex()},
+        api_url + "/api/vkExchange", 
+        json= {"cl_vk": vk.hex()},
         headers= {"Content-Type": "application/json"},
     )
 
-    pk_bytes = bytes.fromhex(response.json().get("sv_pk"))
+    vk_bytes = bytes.fromhex(response.json().get("sv_vk"))
     
     try:
-        files.writes(True, True, pk_bytes, "keys/sv_vk")
+        files.writes(True, True, vk_bytes, "keys/sv_vk", args.silent)
     except Exception as e:
         try:
-            files.writes(False, True, pk_bytes, "keys/sv_vk")
+            files.writes(False, True, vk_bytes, "keys/sv_vk", args.silent)
         except Exception as e:
             print(e)
-
-        
-
 
 if __name__ == "__main__":
     main()

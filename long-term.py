@@ -34,6 +34,7 @@ def main():
     parser.add_argument('-o', '--output',required=False , help="Store the keypair into file")
     parser.add_argument('-rsa', action='store_true', help="Use RSA ")
     parser.add_argument('-test', action='store_true', help="Running system test ")
+    parser.add_argument('--silent', action='store_true', help="Show no stdout on file writes")
 
     # Parse the arguments
     args = parser.parse_args()
@@ -88,24 +89,24 @@ def main():
             for level in range(1,4):
                 if alg == "PQ":
                     ssk, vk = dilithium.keygen(level)
-                    files.writes(True, False, ssk, folder_path + "/dilithium", False)
-                    files.writes(True, True, vk, folder_path + "/dilithium", False)
+                    files.writes(True, False, ssk, folder_path + "/dilithium")
+                    files.writes(True, True, vk, folder_path + "/dilithium")
                     ssk_load = files.reads(True, False, folder_path + "/dilithium")
                     vk_load = files.reads(True, True, folder_path + "/dilithium")
                     if ssk == ssk_load and vk == vk_load:
                         print(f'Dilithium Level {level} Keygen write & Load ... OK')
                 elif alg == "ECC":
                     ssk, vk = ecc.keygen(level)
-                    files.writes(False, False, ssk, folder_path + "/ECDSA", False)
-                    files.writes(False, True, vk, folder_path + "/ECDSA", False)
+                    files.writes(False, False, ssk, folder_path + "/ECDSA")
+                    files.writes(False, True, vk, folder_path + "/ECDSA")
                     ssk_load = files.reads(False, False, folder_path + "/ECDSA")
                     vk_load = files.reads(False, True, folder_path + "/ECDSA")
                     if pem.serialize(ssk,0) == pem.serialize(ssk_load,0) and pem.serialize(vk,1) == pem.serialize(vk_load,1):
                         print(f'ECDSA Level {level} Keygen write & Load ... OK')
                 elif alg == "RSA":
                     ssk, vk = rsaalg.keygen(level)
-                    files.writes(False, False, ssk, folder_path + "/RSA", False)
-                    files.writes(False, True, vk, folder_path + "/RSA", False)
+                    files.writes(False, False, ssk, folder_path + "/RSA")
+                    files.writes(False, True, vk, folder_path + "/RSA")
                     ssk_load = files.reads(False, False, folder_path + "/RSA")
                     vk_load = files.reads(False, True, folder_path + "/RSA")
                     if pem.serialize(ssk,0) == pem.serialize(ssk_load,0) and pem.serialize(vk,1) == pem.serialize(vk_load,1):
@@ -116,16 +117,16 @@ def main():
         if args.pq:
             ssk, vk = dilithium.keygen(args.level)
             if args.output:
-                files.writes(args.pq, False, ssk, args.output)
-                files.writes(args.pq, True, vk, args.output)
+                files.writes(args.pq, False, ssk, args.output, args.silent)
+                files.writes(args.pq, True, vk, args.output, args.silent)
             else:
                 print(pem.sk_bytes_to_pem(ssk))
                 print(pem.pk_bytes_to_pem(vk))
         else: 
             ssk, vk = rsaalg.keygen(args.level) if args.rsa else ecc.keygen(args.level)
             if args.output:
-                files.writes(args.pq, False, ssk, args.output)
-                files.writes(args.pq, True, vk, args.output)
+                files.writes(args.pq, False, ssk, args.output, args.silent)
+                files.writes(args.pq, True, vk, args.output, args.silent)
             else:
                 print(pem.serialize(ssk, 0).decode("utf-8"))
                 print(pem.serialize(vk, 1).decode("utf-8"))

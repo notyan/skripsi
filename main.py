@@ -27,16 +27,16 @@ async def start(keys: Protocol):
     #1. Verify PK KEM
     if keys.isPq :
         #open Client Public Keys
-        cl_vk = files.reads(keys.isPq, True, 'keys/cl_dilithium')
+        cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
         #kempub and signature are sent by hex, so we need to convert it back to bytes
         is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
     else :
         if keys.isRsa:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_rsa')
+            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
         else:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_ecdsa')
+            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
@@ -46,7 +46,7 @@ async def start(keys: Protocol):
             #K Generation and encapsulation
             c_bytes, K = kyber.encap(keys.level, bytes.fromhex(keys.kemPub))
             #Ciphertext Signing Process
-            sv_ssk = files.reads(keys.isPq, False, 'keys/sv_dilithium') 
+            sv_ssk = files.reads(keys.isPq, False, f'../keys/sv_dil{keys.level}') 
             signature = dilithium.sign(keys.level, c_bytes, sv_ssk)
         else:
             kemPublic_bytes = bytes.fromhex(keys.kemPub) 
@@ -56,10 +56,10 @@ async def start(keys: Protocol):
 
             #Open the server signature key, and change from pem  to instance
             if keys.isRsa:
-                sv_ssk = files.reads(keys.isPq, False, 'keys/sv_rsa') 
+                sv_ssk = files.reads(keys.isPq, False, f'../keys/sv_rsa{keys.level}') 
                 signature = rsaalg.sign(keys.level, c_bytes, sv_ssk)
             else:
-                sv_ssk = files.reads(keys.isPq, False, 'keys/sv_ecdsa') 
+                sv_ssk = files.reads(keys.isPq, False, f'../keys/sv_ecdsa{keys.level}') 
                 signature = ecc.sign(keys.level, c_bytes, sv_ssk)
         #Sent The signature alongside the ciphertext
 
@@ -78,76 +78,33 @@ async def start(keys: Protocol):
         print("Verification Invalid Maybe Somebody change the data")
 
 
-
-
-@app.post("/api/testSession")
-async def testing(keys: Protocol):
-    if keys.isPq :
-        #open Client Public Keys
-        cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
-        is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-    else :
-        if keys.isRsa:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
-            is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-        else:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
-            is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-
-    if is_valid :
-        if keys.isPq :
-            c_bytes, K = kyber.encap(keys.level, bytes.fromhex(keys.kemPub))
-            sv_ssk = files.reads(keys.isPq, False, 'keys/sv_dilithium') 
-            signature = dilithium.sign(keys.level, c_bytes, sv_ssk)
-        else:
-            kemPublic_bytes = bytes.fromhex(keys.kemPub) 
-            #TODO change this block for better process 
-            #print(kemPublic_bytes.encode())  
-            #kemPublic = pem.serializeDer(kemPublic_bytes.encode(), 1)
-            kemPublic_pem = pem.pk_bytes_to_pem(kemPublic_bytes)        #Change bytes to pem
-            kemPublic = pem.pem_to_key(kemPublic_pem.encode(), 1)       #Encode pem -> bytes -> instance
-            c, K = ecc.encap(keys.level, kemPublic)
-            #Open the server signature key, and change from pem  to instance
-            sv_ssk = files.reads(keys.isPq, False, 'keys/sv_ecdsa') 
-            #Ciphertext Signing Process for ECC Only:
-            c_bytes = pem.serializeDer(c, 1)
-            signature = ecc.sign(keys.level, c_bytes, sv_ssk)
-            #Ciphertext Signing Process for RSA Only:
-            #signature = rsaalg.sign(keys.level, c, sv_ssk)
-    else: 
-        print("Verification Invalid")
-
-    #Sent The signature alongside the ciphertext
-    return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
-
-
-@app.get("/api/sig_gen")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
 class PublicKey(BaseModel):
-    pk: str
+    cl_vk: str
 
-
-@app.post("/api/pkExchange")
-async def pkExchange(keys: PublicKey):
+@app.post("/api/vkExchange")
+async def vkExchange(keys: PublicKey):
     keysizes = {
-        'dil1': 1312, 'dil2': 1952, 'dil3': 2592,
-        'ecdsa1': 92, 'ecdsa2': 124, 'ecdsa3': 158,
-        'rsa1': 422, 'rsa2': 998, 'rsa3': 1958,
+        1312: 'dil1', 1952: 'dil2', 2592: 'dil3', 
+        92 : 'ecdsa1',  124: 'ecdsa2', 158 : 'ecdsa3',
+        422 : 'rsa1', 998 : 'rsa2', 1958 : 'rsa3',
     }
-    pq = [1312, 1952, 2592]
-    keysize = len(bytes.fromhex(keys.pk))
-    result = find_key(keysizes, keysize)
+    result = keysizes[len(bytes.fromhex(keys.cl_vk))]
+    cl_vk_bytes = bytes.fromhex(keys.cl_vk)
     if "dil" in result:
-        pk = files.reads(True, True, "../keys/" + result)
+        files.writes(True, True, cl_vk_bytes, "keys/cl_vk")
+        sv_vk_bytes = files.reads(True, True, "../keys/sv_" + result)
     else:
-        pk = files.reads(True, True, "../keys/" + result)
-    print(result)
-    print(pk[:20])
-    return {"sv_pk" : pk.hex()}
+        cl_vk = pem.der_to_key(cl_vk_bytes, 1)
+        files.writes(False, True,cl_vk, "keys/cl_vk")
+        sv_vk = files.reads(False, True, "../keys/sv_" + result)
+        sv_vk_bytes = pem.serializeDer(sv_vk, 1)
+    return {"sv_vk" : sv_vk_bytes.hex()}
 
 @app.post("/api/sessionStart")
 async def init(keys: Protocol):
     ciphertext = kyber.encap(keys.kemalg, keys.pubkey) 
     return {"ciphertext": ciphertext}
+
+@app.get("/api/sig_gen")
+def read_item(item_id: int, q: Union[str, None] = None):
+    return {"item_id": item_id, "q": q}

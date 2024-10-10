@@ -1,6 +1,6 @@
 from utils import pem
 
-def writes(pq, isPub, key, path, printer=True): 
+def writes(pq, isPub, key, path, silent=True): 
     if isPub:
         f = open(path + ".pub", "w")
         if pq:
@@ -8,7 +8,7 @@ def writes(pq, isPub, key, path, printer=True):
         else:
             f.write(pem.serialize(key, 1).decode("utf-8"))
         f.close()
-        if printer:
+        if not silent:
             print("Public Key Written into " + path + ".pub")
     else:
         f = open(path, "w")
@@ -17,7 +17,7 @@ def writes(pq, isPub, key, path, printer=True):
         else:
             f.write(pem.serialize(key, 0).decode("utf-8"))  
         f.close()
-        if printer:
+        if not silent:
             print("Private Key Written into " + path)
 
 def reads(pq, isPub, path):
