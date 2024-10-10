@@ -1,9 +1,14 @@
+from signal import pthread_kill
+from sys import exception
 from typing import Union
 from utils import files, kyber, pem, dilithium, ecc, rsaalg
 from pydantic import BaseModel
 from fastapi import FastAPI
 
 app = FastAPI()
+
+def find_key(dictionary, value):
+    return next((key for key, value in dictionary.items() if value == value), None)
 
 class Protocol(BaseModel):
     isPq: bool
@@ -123,9 +128,24 @@ def read_item(item_id: int, q: Union[str, None] = None):
 class PublicKey(BaseModel):
     pk: str
 
+
 @app.post("/api/pkExchange")
 async def pkExchange(keys: PublicKey):
-    return {keys.pk}
+    keysizes = {
+        'dil1': 1312, 'dil2': 1952, 'dil3': 2592,
+        'ecdsa1': 92, 'ecdsa2': 124, 'ecdsa3': 158,
+        'rsa1': 422, 'rsa2': 998, 'rsa3': 1958,
+    }
+    pq = [1312, 1952, 2592]
+    keysize = len(bytes.fromhex(keys.pk))
+    result = find_key(keysizes, keysize)
+    if "dil" in result:
+        pk = files.reads(True, True, "../keys/" + result)
+    else:
+        pk = files.reads(True, True, "../keys/" + result)
+    print(result)
+    print(pk[:20])
+    return {"sv_pk" : pk.hex()}
 
 @app.post("/api/sessionStart")
 async def init(keys: Protocol):

@@ -69,16 +69,16 @@ def main():
     signature_bytes = bytes.fromhex(sv_signature)
     if args.pq:
         #Open server public key
-        sv_vk = files.reads(True, True, 'keys/sv_dilithium')
+        sv_vk = files.reads(True, True, 'keys/sv_vk')
         is_valid = dilithium.verif(args.level, c_bytes, signature_bytes, sv_vk)
         if is_valid == True:
             K = kyber.decap(args.level, sk, c_bytes)
     else: 
         if args.rsa:
-            sv_vk = files.reads(False, True, 'keys/sv_rsa')
+            sv_vk = files.reads(False, True, 'keys/sv_vk')
             is_valid = rsaalg.verif(args.level, c_bytes, signature_bytes, sv_vk)
         else:
-            sv_vk = files.reads(False, True, 'keys/sv_ecdsa')
+            sv_vk = files.reads(False, True, 'keys/sv_vk')
             is_valid = ecc.verif(args.level, c_bytes, signature_bytes, sv_vk)
         if is_valid == True:
             K = ecc.decap(args.level, sk, pem.der_to_key(c_bytes, 1))
