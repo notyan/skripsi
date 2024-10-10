@@ -7,7 +7,7 @@ app = FastAPI()
 
 class Protocol(BaseModel):
     isPq: bool
-    test: int
+    isTest: int
     isRsa: bool
     kemPub: str
     signature: str
@@ -57,15 +57,17 @@ async def start(keys: Protocol):
                 sv_ssk = files.reads(keys.isPq, False, 'keys/sv_ecdsa') 
                 signature = ecc.sign(keys.level, c_bytes, sv_ssk)
         #Sent The signature alongside the ciphertext
-        if keys.test != 0:
-            # print(bytes.fromhex(keys.kemPub)[keys.test:keys.test*2])
-            # print(bytes.fromhex(keys.signature)[keys.test:keys.test*2])
-            # print(signature[keys.test:keys.test*2])
-            # print(c_bytes[keys.test:keys.test*2])
-            # print("\n")
-            print(K)
-            
-        return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
+
+        if keys.isTest != 0:
+            n = keys.isTest
+            return{"validator" : (bytes.fromhex(keys.kemPub)[n:n*2] + 
+                   bytes.fromhex(keys.signature)[n:n*2] +
+                   signature[n:n*2] + c_bytes[n:n*2] + K ).hex(), 
+                   "signature" : signature.hex(), 
+                   "ciphertext" : c_bytes.hex()
+                   }
+        else: 
+            return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
     
     else: 
         print("Verification Invalid Maybe Somebody change the data")
@@ -118,9 +120,12 @@ async def testing(keys: Protocol):
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
 
-@app.post("/api/bytesToPem")
-async def bytesConvert(keys: Protocol):
-    return {keys.pubkey}
+class PublicKey(BaseModel):
+    pk: str
+
+@app.post("/api/pkExchange")
+async def pkExchange(keys: PublicKey):
+    return {keys.pk}
 
 @app.post("/api/sessionStart")
 async def init(keys: Protocol):

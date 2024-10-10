@@ -51,7 +51,7 @@ def main():
         #Bytes need to transported as Hex to reduce size
         "isPq": args.pq,
         "isRsa": args.rsa,
-        "test": idx,
+        "isTest": idx,
         "kemPub": pk_bytes.hex(),
         "signature": signature.hex(),
         "level": args.level
@@ -73,7 +73,6 @@ def main():
         is_valid = dilithium.verif(args.level, c_bytes, signature_bytes, sv_vk)
         if is_valid == True:
             K = kyber.decap(args.level, sk, c_bytes)
-            print("AKE Protocol Verified")
     else: 
         if args.rsa:
             sv_vk = files.reads(False, True, 'keys/sv_rsa')
@@ -81,19 +80,21 @@ def main():
         else:
             sv_vk = files.reads(False, True, 'keys/sv_ecdsa')
             is_valid = ecc.verif(args.level, c_bytes, signature_bytes, sv_vk)
-        
         if is_valid == True:
             K = ecc.decap(args.level, sk, pem.der_to_key(c_bytes, 1))
             
-    
+    #Checking The whole process
     if args.test:
-        # print(pk_bytes[idx:idx*2])
-        # print(signature[idx:idx*2])
-        # print(signature_bytes[idx:idx*2])
-        # print(c_bytes[idx:idx*2])
-        # print("\n")
-        print(idx)
-        print(K)
+        alg = "Kyber_Dilithium" if args.pq else "ECDH_RSA" if args.rsa else "ECDH_ECDSA"
+        try:
+        # sv_validator = bytes.fromhex(response.json().get("validator"))
+        # validator = pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K
+            assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
+            print(f"✅ {alg} Level {args.level} Passed Tests")
+        except AssertionError as e:
+            print(f"❌ {alg} Level {args.level} Failed Tests ")
+        
+
 
 if __name__ == "__main__":
     main()
