@@ -11,52 +11,80 @@ def main():
     parser = argparse.ArgumentParser(description="AKE Using ECDH and ECDSA")
 
     # Add arguments
-    parser.add_argument('level', type=int, help='Security Level from 1-3')
-    parser.add_argument('-pq' , action='store_true',  help="AKE Using Kyber and Dilithium")
-    parser.add_argument('-rsa', action='store_true', help="AKE Using ECDH and RSASign")
+    #parser.add_argument('level', type=int, help='Security Level from 1-3')
+    #parser.add_argument('-pq' , action='store_true',  help="AKE Using Kyber and Dilithium")
+    #parser.add_argument('-rsa', action='store_true', help="AKE Using ECDH and RSASign")
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
     parser.add_argument('-test', action='store_true', help="Running system test ")
+    parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
 
     # Parse the arguments
     args = parser.parse_args()
 
+    #Determine the algorithm and security level
+    keysizes = {
+        1312: 'dil1', 1952: 'dil2', 2592: 'dil3', 
+        92 : 'ecdsa1',  124: 'ecdsa2', 158 : 'ecdsa3',
+        422 : 'rsa1', 998 : 'rsa2', 1958 : 'rsa3',
+    }
+    try:
+        cl_vk_bytes = files.reads(True, True, args.file)
+    except Exception as e:
+        try:
+            cl_vk = files.reads(False, True, args.file)
+            cl_vk_bytes = pem.serializeDer(cl_vk, 1)
+        except Exception as e:
+            print(f'Make Sure the file {args.file} exists')
+            return(e)
+    alg = keysizes[len(cl_vk_bytes)]
+
+    #Determines Is it post quantum or not
+    isPq = False
+    isRsa = False
+    if "dil" in alg:
+        isPq = True
+    else:
+        if "rsa" in alg:
+            isRsa = True
+    
+    level = 1 if "1" in alg else 2 if "2" in alg else 3
+
     # RUN KEYGEN AND WRITE TO FILE
-    if args.pq:
+    if isPq:
         #1. Generate Kem keypair and write the SK into file
-        sk, pk_bytes = kyber.keygen(args.level)
-        #files.writes(args.pq, False, sk, "keys/kyber")
+        sk, pk_bytes = kyber.keygen(level)
+        #files.writes(isPq, False, sk, "keys/kyber")
         #2. Load the ssk then Sign the Public Key
-        ssk = files.reads(args.pq, False, 'keys/cl_dilithium')
-        signature = dilithium.sign(args.level, pk_bytes, ssk)
+        ssk = files.reads(isPq, False, args.file)
+        signature = dilithium.sign(level, pk_bytes, ssk)
     else: 
         #1. Generate Kem keypair and write the SK into file
-        sk, pk = ecc.keygen(args.level)
+        sk, pk = ecc.keygen(level)
         pk_bytes = pem.serializeDer(pk, 1)
-        #files.writes(args.pq, False, sk, "keys/ecdh")
+        #files.writes(isPq, False, sk, "keys/ecdh")
 
         #2.  Sign the Public Key
-        if args.rsa:
-            ssk = files.reads(args.pq, False, 'keys/cl_rsa')
-            signature = rsaalg.sign(args.level, pk_bytes, ssk)
+        if isRsa:
+            ssk = files.reads(isPq, False, args.file)
+            signature = rsaalg.sign(level, pk_bytes, ssk)
         else:
-            ssk = files.reads(args.pq, False, 'keys/cl_ecdsa')
-            signature = ecc.sign(args.level, pk_bytes, ssk)
+            ssk = files.reads(isPq, False, args.file)
+            signature = ecc.sign(level, pk_bytes, ssk)
     
     if args.test:
         idx = random.randint(round(len(signature)/3), round(len(signature)/2))
     else: 
         idx = 0
-
     body={
         #Bytes need to transported as Hex to reduce size
-        "isPq": args.pq,
-        "isRsa": args.rsa,
+        "isPq": isPq,
+        "isRsa": isRsa,
         "isTest": idx,
         "kemPub": pk_bytes.hex(),
         "signature": signature.hex(),
-        "level": args.level
+        "level": level
     }
-    
+
     #3. Sending Requsest To server 
     response = requests.post(api_url + "/api/sessionGen", json=body,
         headers= {"Content-Type": "application/json"},
@@ -67,32 +95,32 @@ def main():
     sv_signature = response.json().get("signature")
     c_bytes = bytes.fromhex(sv_ciphertext)
     signature_bytes = bytes.fromhex(sv_signature)
-    if args.pq:
+    if isPq:
         #Open server public key
         sv_vk = files.reads(True, True, 'keys/sv_vk')
-        is_valid = dilithium.verif(args.level, c_bytes, signature_bytes, sv_vk)
+        is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
         if is_valid == True:
-            K = kyber.decap(args.level, sk, c_bytes)
+            K = kyber.decap(level, sk, c_bytes)
     else: 
-        if args.rsa:
+        if isRsa:
             sv_vk = files.reads(False, True, 'keys/sv_vk')
-            is_valid = rsaalg.verif(args.level, c_bytes, signature_bytes, sv_vk)
+            is_valid = rsaalg.verif(level, c_bytes, signature_bytes, sv_vk)
         else:
             sv_vk = files.reads(False, True, 'keys/sv_vk')
-            is_valid = ecc.verif(args.level, c_bytes, signature_bytes, sv_vk)
+            is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
         if is_valid == True:
-            K = ecc.decap(args.level, sk, pem.der_to_key(c_bytes, 1))
+            K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1))
             
     #Checking The whole process
     if args.test:
-        alg = "Kyber_Dilithium" if args.pq else "ECDH_RSA" if args.rsa else "ECDH_ECDSA"
+        alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
         try:
         # sv_validator = bytes.fromhex(response.json().get("validator"))
         # validator = pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K
             assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
-            print(f"✅ {alg} Level {args.level} Passed Tests")
+            print(f"✅ {alg} Level {level} Passed Tests")
         except AssertionError as e:
-            print(f"❌ {alg} Level {args.level} Failed Tests ")
+            print(f"❌ {alg} Level {level} Failed Tests ")
         
 
 

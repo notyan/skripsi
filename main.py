@@ -72,6 +72,7 @@ async def start(keys: Protocol):
                    "ciphertext" : c_bytes.hex()
                    }
         else: 
+            print("test")
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
     
     else: 
