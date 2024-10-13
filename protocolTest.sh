@@ -1,12 +1,13 @@
 #!/bin/bash
 #Generate Keypair 
-#algorithm=("dilithium" "ecdsa" "rsa")
-algorithm=("dilithium")
+algorithm=("dilithium" "ecdsa" "rsa")
+#algorithm=("dilithium")
 #Test For normal condition
+mkdir -p "keys"
 for alg in "${algorithm[@]}"
 do
-    keys="keys/cl_$alg"
     for i in {1..3}
+    keys="keys/$alg$i"
     do
         case "$alg" in
             "dilithium")
