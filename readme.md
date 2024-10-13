@@ -1,32 +1,39 @@
 # An Authenticated Key Exchange Protocol Simulation
+Tested On Debian 12 (Bookworm)
 
 ## Installation
 1. Run installation script  on both client and server
 ```
-sudo chmod +x install.sh && sudo ./install.sh
+chmod +x install.sh && ./install.sh
 ```
 
-### How to run
-#### - Server
+## How to run
+### Server
 1. Install fastapi module
 ```
-pip install fastapi==0.112.2
+pip install fastapi[standard]==0.112.2
+```
+2. Run the server key generation
+```
+chmod +x serverKeygen.sh && ./serverKeygen.sh
 ```
 
-2. Run the Api
+3. Run the Server Api
 ```
-python -m fastapi dev main.py --host 0.0.0.0. --port 8000
+python -m fastapi dev main.py --host 0.0.0.0 --port 8000
 ```
 The api will run in port 8000
 
-#### - Client
+### Client
 1. Generate Client Keypair
 ```
 python long-term.py [security_level] -o [Output]
 ```
-To generate Dilithium keypair use `-pq` flag
-To generate RSA keypair use `-rsa` flag
-To silence the output add `--silent` flag
+##### Flags
+`-pq` Generate Dilithium keypair use 
+`-rsa`  generate RSA keypair 
+`--silent` Silence output
+
 2. Exchange Verification Key with server
 ```
 python pkExchange.py [url] -f [public_keys_files]
@@ -36,4 +43,5 @@ python pkExchange.py [url] -f [public_keys_files]
 ```
 python client.py [url] -f [private_keys_files]
 ```
-To run test mode add `--test` flag
+##### Flags
+`--test` Run test mode add
