@@ -28,14 +28,14 @@ def read_root():
 @app.post("/api/sessionGen")
 async def start(keys: Protocol):
     #Check is the client VK exists in server
-    file_path = f'keys/{keys.vk}_vk.pub'
+    file_path = f'keys/client/{keys.vk}_vk.pub'
     if not os.path.exists(file_path):
         return Response(content="Client VK not found, Please send it first", status_code=400, media_type="text/plain")
     else:
         #1. Verify PK KEM
         if keys.isPq :
             #open Client Public Keys
-            cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
+            cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
         else :
