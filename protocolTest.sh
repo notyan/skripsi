@@ -10,7 +10,7 @@ do
     do
         case "$alg" in
             "dilithium")
-                #python long-term.py $i -o $keys -pq --silent && 
+                python long-term.py $i -o $keys -pq --silent && 
                 python pkExchange.py $1 -f "$keys.pub" --silent &&
                 python client.py $1 -test -f $keys
                 ;;
