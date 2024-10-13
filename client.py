@@ -125,7 +125,7 @@ def main():
             except AssertionError as e:
                 print(f"{alg} Level {level} Failed ❌")
     elif response.status_code == 400:
-        print("Data Malformed, please check your keypair, and make server have your verification key")
+        print(response.content.decode())
     else: 
         print("Unknown Error, please try again")
         

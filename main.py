@@ -1,10 +1,8 @@
-from signal import pthread_kill
-from sys import exception
+import os
 from typing import Union
-from urllib import response
 from utils import files, kyber, pem, dilithium, ecc, rsaalg
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, Response
 
 app = FastAPI()
 
@@ -29,21 +27,26 @@ def read_root():
 
 @app.post("/api/sessionGen")
 async def start(keys: Protocol):
-    #1. Verify PK KEM
-    if keys.isPq :
-        #open Client Public Keys
-        cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
-        #kempub and signature are sent by hex, so we need to convert it back to bytes
-        is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-    else :
-        if keys.isRsa:
+    #check is the client VK exists in server
+    file_path = f'keys/{keys.vk}_vk.pub'
+    if not os.path.exists(file_path):
+        return Response(content="Client VK not found, Please send it first", status_code=400, media_type="text/plain")
+    else:
+        #1. Verify PK KEM
+        if keys.isPq :
+            #open Client Public Keys
             cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
-            is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
-        else:
-            cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
-            #kempub and signature are sent by hex, so we need to convert it back to bytes
-            is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
+            is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
+        else :
+            if keys.isRsa:
+                cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
+                #kempub and signature are sent by hex, so we need to convert it back to bytes
+                is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
+            else:
+                cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
+                #kempub and signature are sent by hex, so we need to convert it back to bytes
+                is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
     #2. Generate and Encapsulate K, then sign
     if is_valid :
@@ -77,11 +80,10 @@ async def start(keys: Protocol):
                    "ciphertext" : c_bytes.hex()
                    }
         else: 
-            print("test")
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
     
     else: 
-        raise HTTPException(status_code=400, detail="Bad request: Invalid Verification")
+        return Response(content="Bad request: Invalid Verification", status_code=400, media_type="text/plain")
 
 
 @app.post("/api/vkExchange")
