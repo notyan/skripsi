@@ -1,19 +1,24 @@
 #!/bin/bash
 #Generate Keypair 
-algorithm=("dilithium" "ecdsa" "rsa")
+algorithm=("dil" "ecdsa" "rsa")
+#algorithm=("dil" "ecdsa")
+#Test For normal condition
+mkdir -p "keys"
+
 for alg in "${algorithm[@]}"
 do
+    keys="keys/$alg"
     for i in {1..3}
     do
         case "$alg" in
-            "dilithium")
-                python long-term.py $i -o ../keys/sv_dil$i -pq
+            "dil")
+                python long-term.py $i -o $keys$i -pq --silent 
                 ;;
             "rsa")
-                python long-term.py $i -o ../keys/sv_rsa$i -rsa
+                python long-term.py $i -o $keys$i -rsa --silent
                 ;;
             *)
-                python long-term.py $i -o ../keys/sv_ecdsa$i
+                python long-term.py $i -o $keys$i --silent
                 ;;
         esac
     done
