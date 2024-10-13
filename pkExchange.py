@@ -4,7 +4,6 @@ import argparse
 import requests
 import random
 
-api_url = "http://127.0.0.1:8000/"
 
 #main Function
 def main():
@@ -13,10 +12,12 @@ def main():
 
     # Add arguments
     parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
+    parser.add_argument('url', type=str, help='Define the api Url')
     parser.add_argument('--silent', action='store_true', help="Show no stdout on file writes")
 
     # Parse the arguments
     args = parser.parse_args()
+    api_url = "http://127.0.0.1:8000/" if not args.url else args.url
     #try to read the client Verification key and determines the algorithms
     try:
         vk = files.reads(True, True, args.file[:-4])

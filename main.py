@@ -1,9 +1,10 @@
 from signal import pthread_kill
 from sys import exception
 from typing import Union
+from urllib import response
 from utils import files, kyber, pem, dilithium, ecc, rsaalg
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 
 app = FastAPI()
 
@@ -17,6 +18,9 @@ class Protocol(BaseModel):
     kemPub: str
     signature: str
     level: int
+
+class PublicKey(BaseModel):
+    cl_vk: str
 
 @app.get("/")
 def read_root():
@@ -76,11 +80,7 @@ async def start(keys: Protocol):
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
     
     else: 
-        print("Verification Invalid Maybe Somebody change the data")
-
-
-class PublicKey(BaseModel):
-    cl_vk: str
+        raise HTTPException(status_code=400, detail="Bad request: Invalid Verification")
 
 
 @app.post("/api/vkExchange")
@@ -96,7 +96,7 @@ async def vkExchange(keys: PublicKey):
     if "dil" in result:
         #write the Client VK into file
         files.writes(True, True, cl_vk_bytes, "keys/cl_vk")
-        #Readt server VK
+        #Read server VK
         sv_vk_bytes = files.reads(True, True, "../keys/sv_" + result)
     else:
         cl_vk = pem.der_to_key(cl_vk_bytes, 1)

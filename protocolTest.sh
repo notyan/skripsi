@@ -11,18 +11,18 @@ do
         case "$alg" in
             "dilithium")
                 python long-term.py $i -o $keys -pq --silent && 
-                python pkExchange.py -f "$keys.pub" --silent
-                python client.py -test -f $keys
+                python pkExchange.py $1 -f "$keys.pub" --silent &&
+                python client.py $1 -test -f $keys
                 ;;
             "rsa")
                 python long-term.py $i -o $keys -rsa --silent &&
-                python pkExchange.py -f "$keys.pub" --silent
-                python client.py -test -f $keys
+                python pkExchange.py $1 -f "$keys.pub" --silent &&
+                python client.py $1 -test -f $keys
                 ;;
             *)
                 python long-term.py $i -o $keys --silent &&
-                python pkExchange.py -f "$keys.pub"  --silent
-                python client.py  -test -f $keys
+                python pkExchange.py $1 -f "$keys.pub"  --silent &&
+                python client.py $1 -test -f $keys
                 ;;
         esac
     done

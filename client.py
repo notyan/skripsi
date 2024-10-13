@@ -1,9 +1,8 @@
+from sys import exception
 from utils import ecc, kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
 import random
-
-api_url = "http://127.0.0.1:8000/"
 
 #main Function
 def main():
@@ -11,15 +10,14 @@ def main():
     parser = argparse.ArgumentParser(description="AKE Using ECDH and ECDSA")
 
     # Add arguments
-    #parser.add_argument('level', type=int, help='Security Level from 1-3')
-    #parser.add_argument('-pq' , action='store_true',  help="AKE Using Kyber and Dilithium")
-    #parser.add_argument('-rsa', action='store_true', help="AKE Using ECDH and RSASign")
+    parser.add_argument('url', type=str, help='Define the api Url')
     parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
     parser.add_argument('-test', action='store_true', help="Running system test ")
     parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
 
     # Parse the arguments
     args = parser.parse_args()
+    api_url = "http://127.0.0.1:8000/" if not args.url else args.url
 
     #Determine the algorithm and security level
     keysizes = {
@@ -86,41 +84,49 @@ def main():
     }
 
     #3. Sending Requsest To server 
-    response = requests.post(api_url + "/api/sessionGen", json=body,
-        headers= {"Content-Type": "application/json"},
-    )
+    try:
+        response = requests.post(api_url + "/api/sessionGen", json=body,
+            headers= {"Content-Type": "application/json"},
+        )
+    except exception as e:
+        print(response.status_code)
 
-    #4. Process Response from server
-    sv_ciphertext = response.json().get("ciphertext")
-    sv_signature = response.json().get("signature")
-    c_bytes = bytes.fromhex(sv_ciphertext)
-    signature_bytes = bytes.fromhex(sv_signature)
-    if isPq:
-        #Open server public key
-        sv_vk = files.reads(True, True, 'keys/sv_vk')
-        is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
-        if is_valid == True:
-            K = kyber.decap(level, sk, c_bytes)
+    if response.status_code == 200:
+        #4. Process Response from server
+        sv_ciphertext = response.json().get("ciphertext")
+        sv_signature = response.json().get("signature")
+        c_bytes = bytes.fromhex(sv_ciphertext)
+        signature_bytes = bytes.fromhex(sv_signature)
+        if isPq:
+            #Open server public key
+            sv_vk = files.reads(True, True, 'keys/sv_vk')
+            is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
+            if is_valid == True:
+                K = kyber.decap(level, sk, c_bytes)
+        else: 
+            if isRsa:
+                sv_vk = files.reads(False, True, 'keys/sv_vk')
+                is_valid = rsaalg.verif(level, c_bytes, signature_bytes, sv_vk)
+            else:
+                sv_vk = files.reads(False, True, 'keys/sv_vk')
+                is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
+            if is_valid == True:
+                K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1))
+                
+        #Checking The whole process
+        if args.test:
+            alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
+            try:
+            # sv_validator = bytes.fromhex(response.json().get("validator"))
+            # validator = pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K
+                assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
+                print(f"{alg} Level {level} Pass ✅")
+            except AssertionError as e:
+                print(f"{alg} Level {level} Failed ❌")
+    elif response.status_code == 400:
+        print("Data Malformed, please check your keypair, and make server have your verification key")
     else: 
-        if isRsa:
-            sv_vk = files.reads(False, True, 'keys/sv_vk')
-            is_valid = rsaalg.verif(level, c_bytes, signature_bytes, sv_vk)
-        else:
-            sv_vk = files.reads(False, True, 'keys/sv_vk')
-            is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
-        if is_valid == True:
-            K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1))
-            
-    #Checking The whole process
-    if args.test:
-        alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
-        try:
-        # sv_validator = bytes.fromhex(response.json().get("validator"))
-        # validator = pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K
-            assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
-            print(f"✅ {alg} Level {level} Passed Tests")
-        except AssertionError as e:
-            print(f"❌ {alg} Level {level} Failed Tests ")
+        print("Unknown Error, please try again")
         
 
 
