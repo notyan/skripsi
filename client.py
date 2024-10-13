@@ -80,6 +80,7 @@ def main():
         "isTest": idx,
         "kemPub": pk_bytes.hex(),
         "signature": signature.hex(),
+        "vk": cl_vk_bytes.hex()[:10],
         "level": level
     }
 

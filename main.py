@@ -17,6 +17,7 @@ class Protocol(BaseModel):
     isRsa: bool
     kemPub: str
     signature: str
+    vk: str
     level: int
 
 class PublicKey(BaseModel):
@@ -31,16 +32,16 @@ async def start(keys: Protocol):
     #1. Verify PK KEM
     if keys.isPq :
         #open Client Public Keys
-        cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
+        cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
         #kempub and signature are sent by hex, so we need to convert it back to bytes
         is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
     else :
         if keys.isRsa:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
+            cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
         else:
-            cl_vk = files.reads(keys.isPq, True, 'keys/cl_vk')
+            cl_vk = files.reads(keys.isPq, True, f'keys/{keys.vk}_vk')
             #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
@@ -95,12 +96,12 @@ async def vkExchange(keys: PublicKey):
     cl_vk_bytes = bytes.fromhex(keys.cl_vk)
     if "dil" in result:
         #write the Client VK into file
-        files.writes(True, True, cl_vk_bytes, "keys/cl_vk")
+        files.writes(True, True, cl_vk_bytes, f"keys/{keys.cl_vk[:10]}_vk")
         #Read server VK
         sv_vk_bytes = files.reads(True, True, "../keys/sv_" + result)
     else:
         cl_vk = pem.der_to_key(cl_vk_bytes, 1)
-        files.writes(False, True,cl_vk, "keys/cl_vk")
+        files.writes(False, True,cl_vk, f"keys/{keys.cl_vk[:10]}_vk")
         sv_vk = files.reads(False, True, "../keys/sv_" + result)
         sv_vk_bytes = pem.serializeDer(sv_vk, 1)
     
