@@ -4,6 +4,11 @@
 algorithm=("dil")
 #Test For normal condition
 mkdir -p "keys"
+if [[ -z $1 ]]; then
+    echo -e "Error: Url is required \nUsage: $0 <URL> " >&2
+    exit 1
+fi
+
 for alg in "${algorithm[@]}"
 do
     keys="keys/$alg"

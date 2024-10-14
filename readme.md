@@ -45,3 +45,15 @@ python client.py [url] -f [private_keys_files]
 ```
 ##### Flags
 `--test` Run test mode add
+
+## Running Using Bash Script
+### Run The protocol
+```
+chmod +x runProtocol.sh && ./runProtocol.sh [url] -f [Private Key gile]
+```
+Make sure to have the keypair berfore running the script, The script will automate the Verification Key exchange, and start the process
+### Run Test
+This script will run the whole protocol with all supported algorithm
+```
+chmod +x protocolTest.sh && /protocolTest.sh [url]
+```
