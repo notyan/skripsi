@@ -104,6 +104,7 @@ def main():
             is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
             if is_valid == True:
                 K = kyber.decap(level, sk, c_bytes)
+                print(f"Authenticated Key Exchange using Post Quantum success")
         else: 
             if isRsa:
                 sv_vk = files.reads(False, True, 'keys/sv_vk')
@@ -113,13 +114,12 @@ def main():
                 is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
             if is_valid == True:
                 K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1))
+                print(f"Authenticated Key Exchange using Post Quantum success")
                 
         #Checking The whole process
         if args.test:
             alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
             try:
-            # sv_validator = bytes.fromhex(response.json().get("validator"))
-            # validator = pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K
                 assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
                 print(f"{alg} Level {level} Pass ✅")
             except AssertionError as e:
