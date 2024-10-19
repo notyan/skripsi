@@ -5,9 +5,9 @@ import numpy as np
 
 
 level_range = 4
-iteration = 10
-#algorithms =  ["PQ", "ECC", "RSA"]
-algorithms =  ["ECC", "RSA"]
+iteration = 100
+algorithms =  ["PQ", "ECC", "RSA"]
+#algorithms =  ["ECC", "RSA"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
 
