@@ -5,9 +5,9 @@ import numpy as np
 
 
 level_range = 4
-iteration = 100
+iteration = 10
 #algorithms =  ["PQ", "ECC", "RSA"]
-algorithms =  ["ECC", "PQ", "RSA"]
+algorithms =  ["ECC", "RSA"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
 
@@ -35,9 +35,9 @@ def firstBench(alg, sign_key, level, repetition):
         keygeneration = partial(ecc.keygen, level)
         signing = partial(ecc.sign,level, pk_bytes, sign_key)
     elif alg == "RSA":
-        _, pk = rsaalg.keygen(level)
+        _, pk = ecc.keygen(level)
         pk_bytes = pem.serializeDer(pk, 1)
-        keygeneration = partial(rsaalg.keygen,level)
+        keygeneration = partial(ecc.keygen, level)
         signing = partial(rsaalg.sign,level, pk_bytes, sign_key)
 
     keygen_time_s = timeit.repeat(keygeneration , number=recurrence, repeat=repetition)
@@ -53,6 +53,7 @@ def firstBench(alg, sign_key, level, repetition):
 print("Bench ,Alg ,Level ,Avg ,Median ,95th")
 for alg in algorithms:
     for level in range(1, level_range):
+        #Digital Signature Key Generation w
         if alg == "PQ":
             sign_key, _ = dilithium.keygen(level)
         elif alg == "ECC":
@@ -82,9 +83,10 @@ def secondBench(alg, level, pk_bytes, sign_key, signature,vk, repetition):
         
     elif alg == "RSA":
         pk = pem.der_to_key(pk_bytes, 1)
-        c_bytes, _ = rsaalg.encap(level, pk)
+        c, _ = ecc.encap(level, pk)
+        c_bytes = pem.serializeDer(c, 1)
         verification = partial(rsaalg.verif, level,pk_bytes,signature, vk)    #Verified
-        encapsulation =  partial(rsaalg.encap, level, pk)
+        encapsulation =  partial(ecc.encap, level, pk)
         signing = partial(rsaalg.sign, level, c_bytes, sign_key)
     
     verification_time_s = timeit.repeat(verification , number=recurrence, repeat=repetition)
@@ -114,7 +116,7 @@ for alg in algorithms:
             sign_key, vk = ecc.keygen(level)
             signature = ecc.sign(level, pk_bytes, sign_key)
         elif alg == "RSA":
-            _, pk = rsaalg.keygen(level)
+            _, pk = ecc.keygen(level)
             pk_bytes = pem.serializeDer(pk, 1)
             sign_key, vk = rsaalg.keygen(level)
             signature = rsaalg.sign(level, pk_bytes, sign_key)
@@ -135,8 +137,9 @@ def thirdBench(alg, level, sk_bytes: bytes, c_bytes: bytes, signature, vk,  repe
         decapsulation = partial(ecc.decap, level, sk, c)
     elif alg == "RSA":
         verification = partial(rsaalg.verif, level, c_bytes, signature, vk)
+        c = pem.der_to_key(c_bytes, 1)
         sk = pem.der_to_key(sk_bytes, 0)
-        decapsulation = partial(rsaalg.decap, level, sk, c_bytes)
+        decapsulation = partial(ecc.decap, level, sk, c)
 
     verification_time_s = timeit.repeat(verification , number=recurrence, repeat=repetition)
     decapsulation_time_s = timeit.repeat(decapsulation , number=recurrence, repeat=repetition)
@@ -169,13 +172,14 @@ for alg in algorithms:
             signature = ecc.sign(level, c_bytes, sign_key)
 
         elif alg == "RSA":
-            sk, pk = rsaalg.keygen(level)
+            sk, pk = ecc.keygen(level)
             sign_key, vk = rsaalg.keygen(level)
 
             sk_bytes = pem.serializeDer(sk, 0)
             pk_bytes = pem.serializeDer(pk, 1)
 
-            c_bytes, K = rsaalg.encap(level, pk) 
+            c, K = ecc.encap(level, pk) 
+            c_bytes = pem.serializeDer(c, 1)
             signature = rsaalg.sign(level, c_bytes, sign_key)
 
         result = thirdBench(alg, level, sk_bytes, c_bytes, signature, vk, iteration)

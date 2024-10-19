@@ -20,9 +20,6 @@ def keygenBench():
     ecc.keygen(3)
     rsaalg.keygen(3)
 
-    
-
-
 
 for _ in range(1000):
     keygenBench()

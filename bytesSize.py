@@ -3,7 +3,7 @@ from utils import kyber,dilithium, ecc, rsaalg, pem
 
 algorithms = ["dilithium", "kyber", "ecc", "rsa"]
 #algorithms = ["ecc", "kyber", "dilithium"]
-#algorithms = ["ecc"]
+algorithms = ["ecc", "dilithium"]
 print('alg ,level ,sk ,pk ,c ,K ,sig')
 for alg in algorithms:
     for level in range (1,4):
@@ -19,7 +19,7 @@ for alg in algorithms:
             print(f'{alg[:3]} ,{level} ,{len(sk)} ,{len(pk)} ,- ,- ,{len(signature)}')
         elif alg == "ecc":
             sk, pk = ecc.keygen(level)
-            signature = ecc.sign(level, b"TEST", sk)
+            signature = ecc.sign(level, b"TasdasdsdasdsadsaESTTasdasdsdasdsadsaESTTasdasdsdasdsadsaESTTasdasdsdasdsadsaESTTasdasdsdasdsadsaESTTasdasdsdasdsadsaEST", sk)
             c, K = ecc.encap(level, pk)
             c_byte = pem.serializeDer(c, 1)
 
