@@ -3,6 +3,8 @@ from utils import ecc, kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
 import random
+import time
+
 
 #main Function
 def main():
@@ -15,10 +17,10 @@ def main():
     parser.add_argument('-test', action='store_true', help="Running system test ")
     parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
 
+    print("1",  str(time.strftime("%H:%M:%S", time.localtime())))
     # Parse the arguments
     args = parser.parse_args()
     api_url = "http://127.0.0.1:8000/" if not args.url else args.url
-
     #Determine the algorithm and security level
     keysizes = {
         1312: 'dil1', 1952: 'dil2', 2592: 'dil3', 
@@ -35,6 +37,7 @@ def main():
             print(f'Make Sure the file {args.file} exists')
             return(e)
     alg = keysizes[len(cl_vk_bytes)]
+    print("2",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     #Determines Is it post quantum or not
     isPq = False
@@ -46,6 +49,7 @@ def main():
             isRsa = True
     
     level = 1 if "1" in alg else 2 if "2" in alg else 3
+    print("3",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     # RUN KEYGEN AND WRITE TO FILE
     if isPq:
@@ -68,6 +72,7 @@ def main():
         else:
             ssk = files.reads(isPq, False, args.file)
             signature = ecc.sign(level, pk_bytes, ssk)
+    print("4",  str(time.strftime("%H:%M:%S", time.localtime())))
     
     if args.test:
         idx = random.randint(round(len(signature)/3), round(len(signature)/2))
@@ -84,6 +89,7 @@ def main():
         "level": level
     }
 
+    print("5",  str(time.strftime("%H:%M:%S", time.localtime())))
     #3. Sending Requsest To server 
     try:
         response = requests.post(api_url + "/api/sessionGen", json=body,
@@ -91,6 +97,7 @@ def main():
         )
     except exception as e:
         print(response.status_code)
+    print("6",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     if response.status_code == 200:
         #4. Process Response from server
@@ -104,7 +111,6 @@ def main():
             is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
             if is_valid == True:
                 K = kyber.decap(level, sk, c_bytes)
-                print(f"Authenticated Key Exchange using Post Quantum success")
         else: 
             if isRsa:
                 sv_vk = files.reads(False, True, 'keys/sv_vk')
@@ -114,7 +120,6 @@ def main():
                 is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
             if is_valid == True:
                 K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1))
-                print(f"Authenticated Key Exchange using Post Quantum success")
                 
         #Checking The whole process
         if args.test:
@@ -124,11 +129,16 @@ def main():
                 print(f"{alg} Level {level} Pass ✅")
             except AssertionError as e:
                 print(f"{alg} Level {level} Failed ❌")
+        else:
+            if is_valid == True:
+                print(f"Authenticated Key Exchange Success and Verified")
+
     elif response.status_code == 400:
         print(response.content.decode())
     else: 
         print("Unknown Error, please try again")
         
+    print("7",  str(time.strftime("%H:%M:%S", time.localtime())))
 
 
 if __name__ == "__main__":
