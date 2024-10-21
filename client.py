@@ -17,7 +17,6 @@ def main():
     parser.add_argument('-test', action='store_true', help="Running system test ")
     parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
 
-    print("1",  str(time.strftime("%H:%M:%S", time.localtime())))
     # Parse the arguments
     args = parser.parse_args()
     api_url = "http://127.0.0.1:8000/" if not args.url else args.url
@@ -37,7 +36,6 @@ def main():
             print(f'Make Sure the file {args.file} exists')
             return(e)
     alg = keysizes[len(cl_vk_bytes)]
-    print("2",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     #Determines Is it post quantum or not
     isPq = False
@@ -49,7 +47,6 @@ def main():
             isRsa = True
     
     level = 1 if "1" in alg else 2 if "2" in alg else 3
-    print("3",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     # RUN KEYGEN AND WRITE TO FILE
     if isPq:
@@ -72,7 +69,6 @@ def main():
         else:
             ssk = files.reads(isPq, False, args.file)
             signature = ecc.sign(level, pk_bytes, ssk)
-    print("4",  str(time.strftime("%H:%M:%S", time.localtime())))
     
     if args.test:
         idx = random.randint(round(len(signature)/3), round(len(signature)/2))
@@ -89,7 +85,6 @@ def main():
         "level": level
     }
 
-    print("5",  str(time.strftime("%H:%M:%S", time.localtime())))
     #3. Sending Requsest To server 
     try:
         response = requests.post(api_url + "/api/sessionGen", json=body,
@@ -97,7 +92,6 @@ def main():
         )
     except exception as e:
         print(response.status_code)
-    print("6",  str(time.strftime("%H:%M:%S", time.localtime())))
 
     if response.status_code == 200:
         #4. Process Response from server
@@ -138,7 +132,6 @@ def main():
     else: 
         print("Unknown Error, please try again")
         
-    print("7",  str(time.strftime("%H:%M:%S", time.localtime())))
 
 
 if __name__ == "__main__":
