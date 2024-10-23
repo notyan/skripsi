@@ -3,22 +3,22 @@ from utils import ecc, kyber, pem, dilithium, rsaalg, files
 import argparse
 import requests
 import random
-import time
+import timeit
 
+# Create the parser
+parser = argparse.ArgumentParser(description="AKE Using ECDH and ECDSA")
+
+# Add arguments
+parser.add_argument('url', type=str, help='Define the api Url')
+parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
+parser.add_argument('-test', action='store_true', help="Running system test ")
+parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
+parser.add_argument('-bench', action='store_true', help="Bench the protocol ")
+args = parser.parse_args()
 
 #main Function
-def main():
-    # Create the parser
-    parser = argparse.ArgumentParser(description="AKE Using ECDH and ECDSA")
-
-    # Add arguments
-    parser.add_argument('url', type=str, help='Define the api Url')
-    parser.add_argument('--verbose', action='store_true', help='Increase output verbosity')
-    parser.add_argument('-test', action='store_true', help="Running system test ")
-    parser.add_argument('-f', '--file',required=True , help="Specified the pubkey file, only support .pub extension")
-
+def main(args):
     # Parse the arguments
-    args = parser.parse_args()
     api_url = "http://127.0.0.1:8000/" if not args.url else args.url
     #Determine the algorithm and security level
     keysizes = {
@@ -124,8 +124,7 @@ def main():
             except AssertionError as e:
                 print(f"{alg} Level {level} Failed ❌")
         else:
-            if is_valid == True:
-                print(f"Authenticated Key Exchange Success and Verified")
+            return(is_valid)
 
     elif response.status_code == 400:
         print(response.content.decode())
@@ -135,4 +134,16 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if args.bench:
+        loops= 5
+        from functools import partial
+        process = partial(main,args)
+        process_time_s = timeit.repeat(process, number=loops, repeat=100)    
+        #Convert data from second to milisecond
+        process_time = [ (x * 1000)/loops for x in process_time_s]
+    else:
+        if main(args):
+            print(f"Authenticated Key Exchange Success and Verified")
+        else:
+            print(f"Authenticated Key Exchange Failed")
+        
