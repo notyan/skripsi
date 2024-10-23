@@ -1,4 +1,5 @@
 from utils import kyber, pem, dilithium, rsaalg, ecc
+from utils.percentiles import percentiles
 import timeit
 from functools import partial
 import numpy as np
@@ -11,14 +12,6 @@ algorithms =  ["RSA", "ECC", "PQ"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
 
-def percentiles(data: list):
-
-    result = {
-        'avg' : round(float(np.average(data)),4),
-        'q50' : round(float(np.percentile(data, 50)),4),
-        'q95' : round(float(np.percentile(data, 95)),4)
-    }
-    return result
 
 #Third bench already verified by testing each output to see if the verification and decapsulation give valid output
 def thirdBench(alg, level, sk_bytes: bytes, c_bytes: bytes, signature, vk,  repetition):

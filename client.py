@@ -1,5 +1,6 @@
 from sys import exception
 from utils import ecc, kyber, pem, dilithium, rsaalg, files
+from utils.percentiles import percentiles
 import argparse
 import requests
 import random
@@ -141,6 +142,7 @@ if __name__ == "__main__":
         process_time_s = timeit.repeat(process, number=loops, repeat=100)    
         #Convert data from second to milisecond
         process_time = [ (x * 1000)/loops for x in process_time_s]
+        print(percentiles(process_time))
     else:
         if main(args):
             print(f"Authenticated Key Exchange Success and Verified")

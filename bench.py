@@ -1,8 +1,8 @@
 from utils import kyber, pem, dilithium, rsaalg, ecc
+from utils.percentiles import percentiles
 import timeit
 from functools import partial
 import numpy as np
-
 
 level_range = 4
 iteration = 100
@@ -10,17 +10,6 @@ algorithms =  ["PQ", "ECC", "RSA"]
 #algorithms =  ["ECC", "RSA"]
 #Timeit output are in second, multiply by 1000 to convert to ms
 unit = 1000
-
-
-def percentiles(data: list):
-
-    result = {
-        'avg' : round(float(np.average(data)),4),
-        'q50' : round(float(np.percentile(data, 50)),4),
-        'q95' : round(float(np.percentile(data, 95)),4)
-    }
-    return result
-
 
 #Doing Keygeneration, and Signature
 def firstBench(alg, sign_key, level, repetition):

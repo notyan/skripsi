@@ -2,8 +2,8 @@ import argparse
 import timeit
 
 from utils import dilithium, pem, rsaalg, ecc,kyber, files
+from utils.percentiles import percentiles
 from functools import partial  
-import numpy as np
 
 #In MS
 unit = 1000000
@@ -11,15 +11,6 @@ iteration = 100
 level_range = 1+3
 algorithms =  ["PQ", "ECC", "RSA" ]
 #algorithms =  ["ECC", "PQ"]
-
-def percentiles(data: list):
-
-    result = {
-        'avg' : round(float(np.average(data)),4),
-        'q50' : round(float(np.percentile(data, 50)),4),
-        'q95' : round(float(np.percentile(data, 95)),4)
-    }
-    return result
 
 def main():
     # Create the parser

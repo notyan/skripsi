@@ -2,8 +2,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
 import os
 
-
-
 def keygen(level):
     alg = 3072 if level == 1 else 7680 if level == 2 else 15360
 
