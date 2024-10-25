@@ -1,7 +1,7 @@
 #!/bin/bash
 #Generate Keypair 
-algorithm=("dil" "ecdsa" "rsa")
-#algorithm=("dil")
+#algorithm=("dil" "ecdsa" "rsa")
+algorithm=("dil" "ecdsa")
 #Test For normal condition
 mkdir -p "keys"
 if [[ -z $1 ]]; then

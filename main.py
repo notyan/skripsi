@@ -33,19 +33,14 @@ async def start(keys: Protocol):
         return Response(content="Client VK not found, Please send it first", status_code=400, media_type="text/plain")
     else:
         #1. Verify PK KEM
+        #kempub and signature are sent by hex, so we need to convert it back to bytes
+        cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
         if keys.isPq :
-            #open Client Public Keys
-            cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
-            #kempub and signature are sent by hex, so we need to convert it back to bytes
             is_valid = dilithium.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
         else :
             if keys.isRsa:
-                cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
-                #kempub and signature are sent by hex, so we need to convert it back to bytes
                 is_valid = rsaalg.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
             else:
-                cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
-                #kempub and signature are sent by hex, so we need to convert it back to bytes
                 is_valid = ecc.verif(keys.level, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
     #2. Generate and Encapsulate K, then sign
@@ -69,8 +64,8 @@ async def start(keys: Protocol):
             else:
                 sv_ssk = files.reads(keys.isPq, False, f'keys/server/ecdsa{keys.level}') 
                 signature = ecc.sign(keys.level, c_bytes, sv_ssk)
-        #Sent The signature alongside the ciphertext
 
+        #Sent The signature alongside the ciphertext
         if keys.isTest != 0:
             n = keys.isTest
             return{"validator" : (bytes.fromhex(keys.kemPub)[n:n*2] + 
