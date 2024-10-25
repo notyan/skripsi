@@ -1,4 +1,4 @@
-import kyber, ecc
+from . import kyber, ecc
 def keygen(level, isPq):
     if isPq:
         return kyber.keygen(level)

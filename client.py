@@ -1,6 +1,5 @@
 from sys import exception
-from utils import ecc, kyber, pem, dilithium, rsaalg, files
-from utils.percentiles import percentiles
+from utils import pem, files, kem, ds
 import argparse
 import requests
 import random
@@ -19,17 +18,14 @@ args = parser.parse_args()
 
 #main Function
 def main(args,ssk, cl_vk_bytes, isPq):
-    # Parse the arguments
+
     api_url = "http://127.0.0.1:8000/" if not args.url else args.url
     #Determine the algorithm and security level
-    keysizes = {
-        1312: 'dil1', 1952: 'dil2', 2592: 'dil3', 
-        92 : 'ecdsa1',  124: 'ecdsa2', 158 : 'ecdsa3',
-        422 : 'rsa1', 998 : 'rsa2', 1958 : 'rsa3',
-    }
-    
+    keysizes = { 1312 : 'dil1',   1952 : 'dil2',   2592 : 'dil3', 
+                 92   : 'ecdsa1', 124  : 'ecdsa2', 158  : 'ecdsa3',
+                 422  : 'rsa1',   998  : 'rsa2',   1958 : 'rsa3', }
 
-    #Determines Is it post quantum or not
+    #Determines algorithm and level
     alg = keysizes[len(cl_vk_bytes)]
     level = 1 if "1" in alg else 2 if "2" in alg else 3
     isRsa = True if "rsa" in alg else False
@@ -37,18 +33,12 @@ def main(args,ssk, cl_vk_bytes, isPq):
     toMs = 1000000
     startMs = (time.process_time_ns()/toMs)
     # RUN KEYGEN AND WRITE TO FILE
-    if isPq:
-        #1. Generate Kyber Kem keypair
-        sk, pk_bytes = kyber.keygen(level)
-        #2.  Sign the Public Key
-        signature = dilithium.sign(level, pk_bytes, ssk)
-    else: 
-        #1. Generate ECDH keypair, and change instance to Der
-        sk, pk = ecc.keygen(level)
-        pk_bytes = pem.serializeDer(pk, 1)
-        #2.  Sign the Public Key
-        signature = rsaalg.sign(level, pk_bytes, ssk) if isRsa else ecc.sign(level, pk_bytes, ssk)
-    
+    #1. Generate Kyber Kem keypair
+    sk, pk = kem.keygen(level, isPq)
+    #2.  Sign the Public Key
+    pk_bytes = pem.serializeDer(pk, 1) if not isPq else pk
+    signature = ds.sign(level, isPq, isRsa, pk_bytes, ssk)
+
     #In test mode generate random number for further verification
     idx = random.randint(round(len(signature)/3), round(len(signature)/2)) if args.test else 0
     totalMs = (time.process_time_ns()/toMs) - startMs
@@ -81,30 +71,22 @@ def main(args,ssk, cl_vk_bytes, isPq):
         signature_bytes = bytes.fromhex(sv_signature)
 
         #Open server public key
-        if isPq:
-            sv_vk = files.reads(True, True, 'keys/sv_vk')
-            is_valid = dilithium.verif(level, c_bytes, signature_bytes, sv_vk)
-            K = kyber.decap(level, sk, c_bytes) if is_valid else False
-        else: 
-            sv_vk = files.reads(False, True, 'keys/sv_vk')
-            if isRsa:
-                is_valid = rsaalg.verif(level, c_bytes, signature_bytes, sv_vk)
-            else:
-                is_valid = ecc.verif(level, c_bytes, signature_bytes, sv_vk)
-            K = ecc.decap(level, sk, pem.der_to_key(c_bytes, 1)) if is_valid else False
-                
+        sv_vk = files.reads(isPq, True, 'keys/sv_vk')
+        is_valid = ds.verif(level, isPq, isRsa, c_bytes, signature_bytes, sv_vk)
+
+        c = pem.der_to_key(c_bytes, 1) if not isPq else c_bytes
+        K = kem.decap(level, isPq, sk, c) if is_valid else False
+
         #Checking The whole process in test mod
         if args.test:
             alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
             try:
                 assert bytes.fromhex(response.json().get("validator")) == pk_bytes[idx:idx*2] + signature[idx:idx*2] + signature_bytes[idx:idx*2] + c_bytes[idx:idx*2] + K 
                 print(f"{alg} Level {level} Pass ✅")
-                return(is_valid)
             except AssertionError as e:
                 print(f"{alg} Level {level} Failed ❌")
-                return(is_valid)
         else:
-            print(totalMs + ((time.process_time_ns()/toMs) - startMs))
+            print(totalMs + ((time.process_time_ns()/toMs) - startMs)) if args.bench else False
             return(is_valid)
 
     elif response.status_code == 400:
@@ -122,13 +104,11 @@ if __name__ == "__main__":
     except Exception as e:
         try:
             isPq = True
-            cl_vk_bytes = files.reads(True, True, args.file)
+            cl_vk_bytes = files.reads(isPq, True, args.file)
             ssk = files.reads(isPq, False, args.file)
         except Exception as e:
             print(f'Make Sure the file {args.file} exists')
 
     isValid = main(args, ssk, cl_vk_bytes, isPq)
-    if isValid:
-        print(f"Authenticated Key Exchange Success and Verified")
-    else:
-        print(f"Authenticated Key Exchange Failed")
+    if not args.bench and not args.test:
+        print(f"AKE Success and Verified") if isValid else print(f"AKE Failed")
