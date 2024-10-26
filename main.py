@@ -1,14 +1,16 @@
 import os
+import time
+
 from utils import files, pem, ds, kem
 from pydantic import BaseModel
 from fastapi import FastAPI, Response
-
 app = FastAPI()
 
 class Protocol(BaseModel):
     isPq: bool
     isTest: int
     isRsa: bool
+    isBench: bool
     kemPub: str
     signature: str
     vk: str
@@ -28,9 +30,15 @@ async def start(keys: Protocol):
     if not os.path.exists(file_path):
         return Response(content="Client VK not found, Please send it first", status_code=400, media_type="text/plain")
     else:
-        #1. Verify PK KEM
-        #kempub and signature are sent by hex, so we need to convert it back to bytes
+        #Keypair loads
+        if keys.isBench:# on benchmark we need to separate the keypair load time time
+            filename = f'dil{keys.level}' if keys.isPq else f'rsa{keys.level}' if keys.isRsa else f'ecdsa{keys.level}'
+            sv_ssk = files.reads(keys.isPq, False, f'keys/server/{filename}') 
         cl_vk = files.reads(keys.isPq, True, f'keys/client/{keys.vk}_vk')
+
+        toMs = 1000000
+        startMs = (time.process_time_ns()/toMs)
+        #1. Verify PK KEM
         is_valid = ds.verif(keys.level, keys.isPq, keys.isRsa, bytes.fromhex(keys.kemPub), bytes.fromhex(keys.signature), cl_vk)
 
     if is_valid :
@@ -40,10 +48,11 @@ async def start(keys: Protocol):
         c_bytes = c if keys.isPq else pem.serializeDer(c, 1)
 
         #3. Sign c
-        filename = f'dil{keys.level}' if keys.isPq else f'rsa{keys.level}' if keys.isRsa else f'ecdsa{keys.level}'
-        sv_ssk = files.reads(keys.isPq, False, f'keys/server/{filename}') 
+        if not keys.isBench: #this will run if we try not to bench
+            filename = f'dil{keys.level}' if keys.isPq else f'rsa{keys.level}' if keys.isRsa else f'ecdsa{keys.level}'
+            sv_ssk = files.reads(keys.isPq, False, f'keys/server/{filename}') 
         signature = ds.sign(keys.level, keys.isPq, keys.isRsa, c_bytes, sv_ssk)
-
+        totalMs = (time.process_time_ns()/toMs) - startMs       #time needed to run the keygen and sign
         #Sent The signature alongside the ciphertext
         if keys.isTest != 0:
             n = keys.isTest
@@ -52,6 +61,8 @@ async def start(keys: Protocol):
                    signature[n:n*2] + c_bytes[n:n*2] + K ).hex(), 
                    "signature" : signature.hex(), "ciphertext" : c_bytes.hex()
                    }
+        elif keys.isBench:
+            return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex(), "executionTime" : round(totalMs, 4) }
         else: 
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
     
