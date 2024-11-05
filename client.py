@@ -81,7 +81,7 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
         else:
             serverTime = response.json().get("executionTime") if args.bench else None
             #return((totalMs + serverTime + ((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid)
-            return(((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid
+            return(((time.process_time_ns()/toMs) - startMs), serverTime) if args.bench else isValid
 
 
     elif response.status_code == 400:
