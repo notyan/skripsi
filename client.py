@@ -53,23 +53,27 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
         )
     except exception as e:
         print(response.status_code)
-    responseMs = (time.process_time_ns()/toMs)
 
     if response.status_code == 200:
+        #Open server public key
+        sv_vk = files.reads(isPq, True, 'keys/sv_vk')
+
         #4. Process Response from server
         sv_ciphertext = response.json().get("ciphertext")
         sv_signature = response.json().get("signature")
         c_bytes = bytes.fromhex(sv_ciphertext)
         signature_bytes = bytes.fromhex(sv_signature)
-
-        #Open server public key
-        sv_vk = files.reads(isPq, True, 'keys/sv_vk')
-        is_valid = ds.verif(level, isPq, isRsa, c_bytes, signature_bytes, sv_vk)
-
+        
+        #for non post quantum, change bytes into instance
         c = pem.der_to_key(c_bytes, 1) if not isPq else c_bytes
+
+        responseMs = (time.process_time_ns()/toMs)      #Time Measurement for the second step
+
+        #Verification and decapsulation process
+        is_valid = ds.verif(level, isPq, isRsa, c_bytes, signature_bytes, sv_vk)
         K = kem.decap(level, isPq, sk, c) if is_valid else False
 
-        #Checking The whole process in test mod
+        #Checking The whole process in test mode
         if args.test:
             alg = "Kyber_Dilithium" if isPq else "ECDH_RSA" if isRsa else "ECDH_ECDSA"
             try:
@@ -81,7 +85,6 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
             serverTime = response.json().get("executionTime") if args.bench else None
             return((totalMs + serverTime + ((time.process_time_ns()/toMs) - responseMs)) if args.bench else isValid)
             #return(((time.process_time_ns()/toMs) - startMs), serverTime) if args.bench else isValid
-
 
     elif response.status_code == 400:
         print(response.content.decode())
@@ -118,12 +121,6 @@ if __name__ == "__main__":
         duration = list()
         server_d = list()
         for i in range (0,loop): #First iteration always show outliner, for all algorithm
-            # if i == 1:
-            #     main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
-            # else:
-            #     client, server = main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
-            #     duration.append(client)
-            #     server_d.append(server)
             main(args, ssk, cl_vk_bytes, isPq, isRsa, level) if i == 0 else duration.append(main(args, ssk, cl_vk_bytes, isPq, isRsa, level))
         try:
             print(f'{alg} {percentiles(duration) }')
