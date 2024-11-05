@@ -62,7 +62,6 @@ async def start(keys: Protocol):
                    "signature" : signature.hex(), "ciphertext" : c_bytes.hex()
                    }
         elif keys.isBench:
-            print( round(totalMs, 4))
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex(), "executionTime" : round(totalMs, 4) }
         else: 
             return{"signature" : signature.hex(), "ciphertext" : c_bytes.hex()}
