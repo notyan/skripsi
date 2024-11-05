@@ -118,13 +118,13 @@ if __name__ == "__main__":
         duration = list()
         server_d = list()
         for i in range (1,loop): #First iteration always show outliner, for all algorithm
-            if i == 1:
-                main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
-            else:
-                client, server = main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
-                duration.append(client)
-                server_d.append(server)
-            #main(args, ssk, cl_vk_bytes, isPq, isRsa, level) if i == 1 else duration.append(main(args, ssk, cl_vk_bytes, isPq, isRsa, level))
+            # if i == 1:
+            #     main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
+            # else:
+            #     client, server = main(args, ssk, cl_vk_bytes, isPq, isRsa, level)
+            #     duration.append(client)
+            #     server_d.append(server)
+            main(args, ssk, cl_vk_bytes, isPq, isRsa, level) if i == 1 else duration.append(main(args, ssk, cl_vk_bytes, isPq, isRsa, level))
         try:
             print(f'{alg} {percentiles(duration) }')
         except exception as e:
