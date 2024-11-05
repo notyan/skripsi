@@ -33,9 +33,6 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
 
     #In test mode generate random number for further verification
     idx = random.randint(round(len(signature)/3), round(len(signature)/2)) if args.test else 0
-    #totalMs = (time.process_time_ns()/toMs) - startMs       #time needed to run the keygen and sign
-    #startMs = (time.process_time_ns()/toMs)
-
     body={
         #Bytes need to transported as Hex to reduce size
         "isPq": isPq,
@@ -47,6 +44,7 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
         "vk": cl_vk_bytes.hex()[:10],
         "level": level
     }
+    totalMs = (time.process_time_ns()/toMs) - startMs       #time needed to run the keygen and sign
 
     #3. Sending Requsest To server 
     try:
@@ -55,6 +53,7 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
         )
     except exception as e:
         print(response.status_code)
+    responseMs = (time.process_time_ns()/toMs)
 
     if response.status_code == 200:
         #4. Process Response from server
@@ -80,8 +79,8 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
                 print(f"{alg} Level {level} Failed ❌")
         else:
             serverTime = response.json().get("executionTime") if args.bench else None
-            #return((totalMs + serverTime + ((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid)
-            return(((time.process_time_ns()/toMs) - startMs), serverTime) if args.bench else isValid
+            return((totalMs + serverTime + ((time.process_time_ns()/toMs) - responseMs)) if args.bench else isValid)
+            #return(((time.process_time_ns()/toMs) - startMs), serverTime) if args.bench else isValid
 
 
     elif response.status_code == 400:
@@ -127,7 +126,7 @@ if __name__ == "__main__":
                 server_d.append(server)
             #main(args, ssk, cl_vk_bytes, isPq, isRsa, level) if i == 1 else duration.append(main(args, ssk, cl_vk_bytes, isPq, isRsa, level))
         try:
-            print(f'{alg} {percentiles(duration) } {percentiles(server_d) }')
+            print(f'{alg} {percentiles(duration) }')
         except exception as e:
             print(e)
 
