@@ -33,8 +33,8 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
 
     #In test mode generate random number for further verification
     idx = random.randint(round(len(signature)/3), round(len(signature)/2)) if args.test else 0
-    totalMs = (time.process_time_ns()/toMs) - startMs       #time needed to run the keygen and sign
-    startMs = (time.process_time_ns()/toMs)
+    #totalMs = (time.process_time_ns()/toMs) - startMs       #time needed to run the keygen and sign
+    #startMs = (time.process_time_ns()/toMs)
 
     body={
         #Bytes need to transported as Hex to reduce size
@@ -79,8 +79,10 @@ def main(args,ssk, cl_vk_bytes, isPq, isRsa, level):
             except AssertionError as e:
                 print(f"{alg} Level {level} Failed ❌")
         else:
-            serverTime = response.json().get("executionTime")
-            return((totalMs + serverTime + ((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid)
+            serverTime = response.json().get("executionTime") if args.bench else None
+            #return((totalMs + serverTime + ((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid)
+            return(((time.process_time_ns()/toMs) - startMs)) if args.bench else isValid
+
 
     elif response.status_code == 400:
         print(response.content.decode())
