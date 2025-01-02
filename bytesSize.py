@@ -2,8 +2,8 @@ from ctypes import c_byte
 from utils import kyber,dilithium, ecc, rsaalg, pem
 
 algorithms = ["dilithium", "kyber", "ecc", "rsa"]
-#algorithms = ["ecc", "kyber", "dilithium"]
-algorithms = ["ecc", "dilithium"]
+algorithms = ["ecc", "kyber", "dilithium"]
+#algorithms = ["ecc", "dilithium"]
 print('alg ,level ,sk ,pk ,c ,K ,sig')
 for alg in algorithms:
     for level in range (1,4):
@@ -11,7 +11,7 @@ for alg in algorithms:
             sk, pk = kyber.keygen(level)
             c, K = kyber.encap(level, pk)
 
-            print(f'{alg} ,{level} ,{len(sk)} ,{len(pk)} ,{len(c)} ,{len(K)} ,-')
+            print(f'{alg} ,{level} ,{len(sk)} ,{len(pk)} ,{len( )} ,{len(K)} ,-')
         elif alg == "dilithium":
             sk, pk = dilithium.keygen(level)
             signature = dilithium.sign(level, b"TEST", sk)

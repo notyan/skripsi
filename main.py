@@ -45,6 +45,7 @@ async def start(keys: Protocol):
         #2. Generate and Encapsulate K
         kemPub = bytes.fromhex(keys.kemPub) if keys.isPq else pem.der_to_key( bytes.fromhex(keys.kemPub), 1)
         c, K = kem.encap(keys.level, keys.isPq, kemPub)
+        print(K)
         c_bytes = c if keys.isPq else pem.serializeDer(c, 1)
 
         #3. Sign c

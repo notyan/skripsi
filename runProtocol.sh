@@ -17,6 +17,9 @@ if [ "$1" != "-f" ]; then
 fi
 shift  # Remove -f from the argument list
 
+# Check for -show option
+isShow="$2"
+
 # Get the filename
 keys="$1"
 
@@ -27,5 +30,10 @@ if [[ ! $url =~ ^https?:// ]]; then
 fi
 
 #Run the Verification Key exchange first and then run the protocol
-python pkExchange.py $url -f "$keys.pub" &&
-python client.py $url -f $keys
+if [[ isShow ]]; then
+    python pkExchange.py $url -f "$keys.pub" &&
+    python client.py $url -f $keys -show
+else
+    python pkExchange.py $url -f "$keys.pub" &&
+    python client.py $url -f $keys
+fi
